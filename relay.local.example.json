@@ -1,0 +1,8 @@
+{
+  "//": "Copy to relay.local.json (git-ignored) for relay/build-installer.mjs. One random secret per hub node ID, e.g. node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"",
+  "hub": "https://status.example.com/atlas-media",
+  "tokens": {
+    "1": "replace-with-a-random-secret",
+    "2": "replace-with-another-random-secret"
+  }
+}

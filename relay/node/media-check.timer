@@ -1,0 +1,10 @@
+[Unit]
+Description=Ask the hub every minute whether a streaming check is due
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=1min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

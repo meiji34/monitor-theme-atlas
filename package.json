@@ -1,0 +1,36 @@
+{
+  "name": "monitor-theme",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "pack": "npm run build && node scripts/pack.mjs",
+    "pack:base": "tsc -b && vite build --mode base && node scripts/pack.mjs"
+  },
+  "dependencies": {
+    "country-flag-icons": "^1.6.20",
+    "d3-geo": "^3.1.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.4",
+    "@types/d3-geo": "^3.1.1",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
+    "@vitejs/plugin-react": "^6.1.2",
+    "oxlint": "^1.89.0",
+    "tailwindcss": "^4.3.4",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.5"
+  }
+}

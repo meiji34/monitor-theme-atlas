@@ -1,0 +1,4 @@
+# LF everywhere: the shell scripts and units run on Linux servers.
+* text=auto eol=lf
+*.png binary
+*.gz binary

@@ -1,0 +1,19 @@
+[Unit]
+Description=Atlas streaming check (asks the hub whether one is due)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# The same unprivileged user the monitor agent runs as; on a node with WARP
+# policy routing that user is exempt, so the check sees the node's own address.
+User=monitor-agent
+EnvironmentFile=/etc/media-check.env
+ExecStart=/opt/media-check/report.sh
+TimeoutStartSec=120
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX

@@ -1,0 +1,27 @@
+{
+  "//": "Copy to routes.local.json (git-ignored) for scripts/routes.mjs and scripts/media.mjs. Keys are the hub's node IDs.",
+  "nodes": {
+    "1": {
+      "ssh": "my-melbourne",
+      "ip": "203.0.113.10",
+      "cc": "AU",
+      "at": [144.96, -37.81],
+      "mtr": "sudo -n -u monitor-agent mtr",
+      "//": "optional: how to run mtr (e.g. as a user exempt from WARP policy routing)"
+    },
+    "2": {
+      "ssh": "my-singapore",
+      "ip": "198.51.100.20",
+      "cc": "SG",
+      "at": [103.82, 1.35]
+    },
+    "3": {
+      "ip": "192.0.2.30",
+      "trace": "192.0.2.31",
+      "cc": "US",
+      "at": [-121.89, 37.34],
+      "//": "no ssh: can be traced to, not from; trace overrides ip as the target"
+    }
+  },
+  "links": ["1>*"]
+}

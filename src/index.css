@@ -1,0 +1,151 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg: #f4f7fb;
+  --color-card: #ffffff;
+  --color-line: #e2e8f0;
+  --color-fg: #0f172a;
+  --color-muted: #64748b;
+  --color-primary: #2f5bd3;
+  --color-primary-soft: #e8eefc;
+  /* Status (state only, always paired with a label). */
+  --color-good: #15803d;
+  --color-warn: #b45309;
+  --color-bad: #d03b3b;
+  /* Series: categorical slots 1 and 2, see src/lib/palette.ts. */
+  --color-up: #2a78d6;
+  --color-down: #eb6834;
+  --font-sans: 'IBM Plex Sans', 'Inter', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'Cascadia Mono', ui-monospace, monospace;
+}
+
+html,
+body {
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  /* Faint instrument grid behind everything. */
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(rgb(47 91 211 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(47 91 211 / 0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Component classes live in the components layer so Tailwind utilities
+   (absolute, text-*, etc.) still override them where used together. */
+@layer components {
+  /* Panels: white card with two small corner brackets in the accent colour. */
+  .panel {
+    position: relative;
+    border: 1px solid var(--color-line);
+    border-radius: 10px;
+    background: var(--color-card);
+  }
+  .panel::before,
+  .panel::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: var(--color-primary);
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .panel::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1.5px solid;
+    border-left: 1.5px solid;
+    border-top-left-radius: 10px;
+  }
+  .panel::after {
+    right: -1px;
+    bottom: -1px;
+    border-right: 1.5px solid;
+    border-bottom: 1.5px solid;
+    border-bottom-right-radius: 10px;
+  }
+  .lift {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    border-color: #c7d4ee;
+    box-shadow: 0 10px 24px -12px rgb(15 23 42 / 0.18);
+  }
+
+  /* Small uppercase HUD labels. */
+  .hud {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+}
+
+/* Topology links: dashes travel from the first hop to the next. */
+.flow {
+  animation: flow 1.4s linear infinite;
+}
+@keyframes flow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+.ping-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring 2.4s ease-out infinite;
+}
+@keyframes ring {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Online dots breathe with a soft halo. */
+.breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(21 128 61 / 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(21 128 61 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow,
+  .ping-ring,
+  .breathe {
+    animation: none;
+  }
+  .lift:hover {
+    transform: none;
+  }
+}
+
+/* Page width: the content column, the top bar's contents and the status bar
+   share it; wide screens get more of it. */
+.page-w {
+  max-width: 1400px;
+}
+@media (min-width: 1700px) {
+  .page-w {
+    max-width: 1640px;
+  }
+}

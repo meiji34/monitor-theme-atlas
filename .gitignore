@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# local stand-in for panel settings
+theme.dev.json
+# packaged release
+theme.tar.gz
+
+# node IPs for scripts/routes.mjs
+routes.local.json
+
+# downloaded / generated caches for scripts
+.cache/
+relay.local.json
+
+# Data generated for one deployment (routes, streaming results, the imported
+# cable map). The public theme ships without them; see README.
+src/data/*.json
+scripts/data/*.json

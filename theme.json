@@ -1,0 +1,96 @@
+{
+  "name": "Atlas",
+  "short": "atlas",
+  "description": "卡片牆 + 地球／平面地圖 + 節點拓撲",
+  "version": "0.12.0",
+  "author": "yddsfj",
+  "url": "https://github.com/meiji34/monitor-theme-atlas",
+  "config": [
+    { "type": "title", "label": "地圖" },
+    { "key": "show_map", "type": "boolean", "label": "顯示地圖", "default": true },
+    {
+      "key": "map_mode",
+      "type": "select",
+      "label": "預設地圖模式",
+      "default": "globe",
+      "options": [
+        { "value": "globe", "label": "地球" },
+        { "value": "flat", "label": "平面大地圖" }
+      ]
+    },
+    { "key": "globe_autorotate", "type": "boolean", "label": "預設自動旋轉地球", "default": true, "help": "訪客也可以用地圖右上角的按鈕自行開關" },
+    { "key": "light_countries", "type": "boolean", "label": "點亮有節點的國家", "default": true },
+    {
+      "key": "map_labels",
+      "type": "select",
+      "label": "地圖節點標籤",
+      "default": "speed",
+      "options": [
+        { "value": "speed", "label": "國旗 + 即時速率" },
+        { "value": "name", "label": "國旗 + 名稱" },
+        { "value": "name_speed", "label": "國旗 + 名稱 + 速率" },
+        { "value": "off", "label": "不顯示" }
+      ]
+    },
+    {
+      "key": "locations",
+      "type": "text",
+      "label": "節點位置",
+      "default": "",
+      "help": "每行一筆：節點名稱或 #ID = 城市名，或 = 緯度,經度。例：US St. Louis Cloudcone = St. Louis；#8 = -36.85,174.76。沒寫的節點依名稱關鍵字和國家自動定位"
+    },
+    { "type": "title", "label": "拓撲" },
+    { "key": "show_topology", "type": "boolean", "label": "預設顯示拓撲連線", "default": true, "help": "訪客也可以用地圖右上角的按鈕自行切換" },
+    {
+      "key": "topology_mode",
+      "type": "select",
+      "label": "拓撲來源",
+      "default": "auto",
+      "options": [
+        { "value": "auto", "label": "自動：有自訂就用自訂，否則中心節點連線" },
+        { "value": "hub", "label": "中心節點連到所有節點" },
+        { "value": "custom", "label": "只用自訂拓撲" }
+      ]
+    },
+    {
+      "key": "topology_hub",
+      "type": "string",
+      "label": "中心節點",
+      "default": "",
+      "help": "節點名稱或 #ID，例如 #1。留空則用排序第一的節點"
+    },
+    {
+      "key": "topology",
+      "type": "text",
+      "label": "自訂拓撲",
+      "default": "",
+      "help": "每行一條鏈路，用 -> 串接，可寫節點名稱、#ID 或城市名，行尾可用 | 加標籤。例：Guangzhou -> HK Hong Kong CN2 -> #2 | 中轉"
+    },
+    {
+      "key": "topology_routes",
+      "type": "boolean",
+      "label": "預設以真實路由畫連線",
+      "default": false,
+      "help": "連線改沿實際的 AS 路徑走（mtr 追蹤結果，打包時內建的快照），跨海段沿推測的海底光纜畫，並顯示 TeleGeography 海纜底圖（2022 版，CC BY-NC-SA 3.0，限非商業使用）。訪客也可以用地圖右上角的「路由」按鈕切換；沒有路由資料的連線維持直線"
+    },
+    { "type": "title", "label": "卡片" },
+    { "key": "show_summary", "type": "boolean", "label": "顯示總覽", "default": true },
+    {
+      "key": "show_media",
+      "type": "boolean",
+      "label": "節點詳情顯示流媒體檢測",
+      "default": true,
+      "help": "Netflix、Disney+、ChatGPT 等服務在各節點能否使用。裝了 relay/ 的即時檢測服務時顯示即時結果，登入後可按「點擊檢測」；沒裝則用打包時內建的快照"
+    },
+    {
+      "key": "ping_lines",
+      "type": "text",
+      "label": "卡片顯示的延遲項目",
+      "default": "",
+      "help": "每行一個延遲監控名稱，留空則顯示前 3 項"
+    },
+    { "key": "offline_last", "type": "boolean", "label": "離線節點排在最後", "default": true },
+    { "type": "title", "label": "網站" },
+    { "key": "notice", "type": "string", "label": "公告", "default": "", "help": "顯示在頁面頂部的一行純文字，留空則不顯示" }
+  ]
+}
