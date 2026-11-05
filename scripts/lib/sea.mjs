@@ -143,6 +143,11 @@ function landmasses() {
   }
   return mass
 }
+// The whole landmass raster (-1 = sea), for the relay's copy of overLand().
+export function landmassGrid() {
+  return { w: W, h: H, res: RES, grid: landmasses() }
+}
+
 export function landmass(at) {
   const m = landmasses()
   const c0 = cellOf(at)

@@ -12,6 +12,9 @@
     "pack:base": "tsc -b && vite build --mode base && node scripts/pack.mjs"
   },
   "dependencies": {
+    "@fontsource/barlow": "^5.3.0",
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "@fontsource/barlow-semi-condensed": "^5.3.0",
     "country-flag-icons": "^1.6.20",
     "d3-geo": "^3.1.2",
     "react": "^19.3.1",

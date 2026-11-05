@@ -51,7 +51,7 @@ export const MEDIA_GROUPS: { label: string; items: { id: string; name: string }[
     ],
   },
   {
-    label: '音樂 · 社群',
+    label: '音樂與社群',
     items: [
       { id: 'spotify', name: 'Spotify' },
       { id: 'tiktok', name: 'TikTok' },

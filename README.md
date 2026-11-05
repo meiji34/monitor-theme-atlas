@@ -51,6 +51,8 @@ npm run pack
 
 Without the cable data below, sea crossings are drawn as plain water paths over a 0.25° raster of Natural Earth land (public domain, via `world-atlas`).
 
+**Live mode**: with the relay from [`relay/`](relay/README.md) installed, routes are traced by the relay instead (from the source node to every node, daily, and on a logged-in admin's 「追蹤路由」 / 「重新追蹤」), new nodes included as soon as their agent runs; no repacking.
+
 Caveats: a traceroute shows one direction only (the return path can differ), routes change, and which cable carries a leg is an inference; re-run and repack to refresh.
 
 ### Submarine cable map (海纜底圖)
@@ -82,6 +84,10 @@ Node details, the sidebar and the node cards show whether streaming and AI servi
 - **Live**, with the relay from [`relay/`](relay/README.md) next to the hub: results come from it, nodes re-check once a day on their own, and a logged-in admin gets 「點擊檢測」 / 「重新檢測」 buttons; a request is picked up within a minute. This works with the public release too, no rebuild needed: the theme looks for the relay at `/atlas-media/` and uses it when it answers.
 
 Without either, the section isn't shown. Bahamut 動畫瘋 isn't included: it answers scripted requests with a 403 whatever the region. TikTok sometimes serves a challenge page to datacenter addresses, shown as 無法判斷.
+
+## Language and appearance
+
+The interface comes in Traditional Chinese, Simplified Chinese and English (the globe button in the top bar), and light or dark (the moon / sun button; the settings menu also offers "system"). The site's defaults are theme settings (預設語言, 預設外觀); a visitor's choice is kept in their browser. Strings live in `src/lib/i18n.ts`, written in Traditional Chinese in the code and looked up there for the other two.
 
 ## Development
 

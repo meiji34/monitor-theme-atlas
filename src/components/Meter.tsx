@@ -4,13 +4,13 @@ export function Meter({ label, value, right, detail }: { label: string; value: n
   return (
     <div className="min-w-0">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="hud tracking-[0.08em]!">{label}</span>
-        <span className="font-mono text-[13px] font-semibold tabular-nums">{right}</span>
+        <span className="hud">{label}</span>
+        <span className="font-mono text-[15px] font-semibold">{right}</span>
       </div>
-      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
+      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-primary-soft">
         <div className={`h-full rounded-full transition-[width] duration-500 ${tone(value)}`} style={{ width: `${value}%` }} />
       </div>
-      <div className="mt-1.5 truncate font-mono text-[11px] text-muted">{detail}</div>
+      <div className="mt-1.5 truncate font-mono text-[13px] text-muted">{detail}</div>
     </div>
   )
 }

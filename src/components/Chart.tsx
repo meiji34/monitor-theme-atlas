@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { t as tr } from '../lib/i18n'
 
 export interface Series {
   name: string
@@ -84,7 +85,7 @@ export function Chart({ title, ts, series, format, max, extra }: Props) {
     <div className="panel p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="hud text-fg!">{title}</span>
-        <div className="flex flex-wrap items-center gap-3 text-[11px]">
+        <div className="flex flex-wrap items-center gap-3 text-[12.5px]">
           {series.map((s) => (
             <span key={s.name} className="flex items-center gap-1.5 text-muted">
               <span className="h-0.5 w-3 rounded" style={{ background: s.color }} />
@@ -95,7 +96,7 @@ export function Chart({ title, ts, series, format, max, extra }: Props) {
         </div>
       </div>
       {ts.length < 2 ? (
-        <div className="flex h-[150px] items-center justify-center text-[13px] text-muted">沒有資料</div>
+        <div className="flex h-[150px] items-center justify-center text-[14px] text-muted">{tr('沒有資料')}</div>
       ) : (
         <div className="relative">
           <svg
@@ -107,8 +108,8 @@ export function Chart({ title, ts, series, format, max, extra }: Props) {
           >
             {ticks.map((t) => (
               <g key={t}>
-                <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#e2e8f0" strokeDasharray={t ? '3 3' : undefined} />
-                <text x={PAD.l - 6} y={y(t) + 3.5} textAnchor="end" className="fill-muted font-mono text-[10px]">
+                <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} className="stroke-line" strokeDasharray={t ? '3 3' : undefined} />
+                <text x={PAD.l - 6} y={y(t) + 3.5} textAnchor="end" className="fill-muted font-mono text-[11.5px]">
                   {format(t)}
                 </text>
               </g>
@@ -119,7 +120,7 @@ export function Chart({ title, ts, series, format, max, extra }: Props) {
                 x={x(i)}
                 y={H - 6}
                 textAnchor={k === 0 ? 'start' : k === xTicks.length - 1 ? 'end' : 'middle'}
-                className="fill-muted font-mono text-[10px]"
+                className="fill-muted font-mono text-[11.5px]"
               >
                 {timeFmt(ts[i], span)}
               </text>
@@ -132,10 +133,10 @@ export function Chart({ title, ts, series, format, max, extra }: Props) {
             ))}
             {hover !== null && (
               <g>
-                <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={H - PAD.b} stroke="#94a3b8" strokeDasharray="2 2" />
+                <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={H - PAD.b} className="stroke-muted" strokeDasharray="2 2" />
                 {series.map((s) =>
                   s.values[hover] !== null && s.values[hover] !== undefined ? (
-                    <circle key={s.name} cx={x(hover)} cy={y(s.values[hover]!)} r="3" fill="#fff" stroke={s.color} strokeWidth="1.5" />
+                    <circle key={s.name} cx={x(hover)} cy={y(s.values[hover]!)} r="3" className="fill-card" stroke={s.color} strokeWidth="1.5" />
                   ) : null,
                 )}
               </g>
@@ -143,7 +144,7 @@ export function Chart({ title, ts, series, format, max, extra }: Props) {
           </svg>
           {hover !== null && (
             <div
-              className="pointer-events-none absolute top-1 z-10 min-w-36 rounded-md border border-line bg-white/95 px-2.5 py-1.5 text-[11px] shadow-lg"
+              className="pointer-events-none absolute top-1 z-10 min-w-36 rounded-md border border-line bg-raised/95 px-2.5 py-1.5 text-[12.5px] shadow-lg"
               style={
                 x(hover) / W > 0.6
                   ? { right: `${(1 - x(hover) / W) * 100 + 2}%` }

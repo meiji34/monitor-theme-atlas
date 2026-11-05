@@ -14,7 +14,9 @@ import countries110 from 'world-atlas/countries-110m.json'
 import { speed } from '../lib/format'
 import { countryCentre, ISO_NUMERIC, type Endpoint, type Link, type LngLat } from '../lib/geo'
 import { loadCables, type Cable, type CableData } from '../lib/cables'
+import { locale, t } from '../lib/i18n'
 import { asName, OTHER_AS, PLAIN_SEA, ROUTES, routeFor, routeLegs, type Leg } from '../lib/routes'
+import { useDark } from '../lib/scheme'
 import type { Node } from '../lib/types'
 import { Flag } from './Flag'
 import { MapLabels, type LabelMode } from './MapLabels'
@@ -36,18 +38,48 @@ const BORDERS = mesh(topo, topo.objects.countries, (a, b) => a !== b)
 const GRATICULE = geoGraticule10()
 const SPHERE = { type: 'Sphere' } as GeoPermissibleObjects
 
-// Light palette for the map, kept here since SVG fills don't read CSS classes.
-const C = {
-  sea: '#f7f9fc',
-  land: '#dbe3ee',
-  border: '#ffffff',
-  grid: '#2f5bd3',
-  lit: '#bfd2f8',
-  litStroke: '#2f5bd3',
-  litDown: '#fde2e2',
-  up: '#2f5bd3',
-  down: '#d03b3b',
-  partial: '#b45309',
+// Map palettes, kept here since SVG attributes don't read CSS classes. Day:
+// a paper chart with sand land; night: the dim navy of a ship's display.
+// Topology links take chart magenta, the colour charts give routes.
+const DAY = {
+  sea: '#f3f7f9',
+  land: '#e2dfd2',
+  border: '#f9fbfc',
+  grid: '#1d5c96',
+  lit: '#c9d9ea',
+  litStroke: '#1d5c96',
+  litDown: '#f4d8d4',
+  up: '#1d5c96',
+  link: '#b2367f',
+  down: '#c23b31',
+  partial: '#a35f08',
+  shade: ['#ffffff', '#eef3f6', '#dbe4ea'],
+  rim: '#ffffff',
+  flatRim: '#d2dde4',
+  dot: '#ffffff',
+  dotRing: '#41586b',
+  city: '#587083',
+  cableOpacity: 0.42,
+}
+const NIGHT: typeof DAY = {
+  sea: '#0b1926',
+  land: '#1b2b38',
+  border: '#0b1926',
+  grid: '#6aa8de',
+  lit: '#1f3b57',
+  litStroke: '#6aa8de',
+  litDown: '#4a2427',
+  up: '#6aa8de',
+  link: '#d968ab',
+  down: '#e8695e',
+  partial: '#d99a3a',
+  shade: ['#16293b', '#10202f', '#0a1622'],
+  rim: '#213748',
+  flatRim: '#213748',
+  dot: '#0f1f2e',
+  dotRing: '#9db1c2',
+  city: '#7f95a7',
+  cableOpacity: 0.5,
 }
 
 type Mode = 'globe' | 'flat'
@@ -68,7 +100,7 @@ interface Props {
   // null when no topology is configured, so the toggle stays hidden.
   topology: { on: boolean; toggle: () => void } | null
   // null when no shown link has a traced route.
-  routes: { on: boolean; toggle: () => void; colours: Map<number, string> } | null
+  routes: { on: boolean; toggle: () => void; colours: Map<number, string>; version?: number } | null
 }
 
 const NO_LINKS: Link[] = []
@@ -149,6 +181,7 @@ export function MapView({
   onSelect,
   fill,
 }: Props) {
+  const C = useDark() ? NIGHT : DAY
   const links = topology?.on === false ? NO_LINKS : allLinks
   const showRoutes = !!routes?.on
   // Per link: its traced path split into per-network legs, when routes are shown.
@@ -161,7 +194,8 @@ export function MapView({
       const [a, b] = samePlace(r.from, l.from.coord) ? [l.from, l.to] : [l.to, l.from]
       return { ...r, legs: routeLegs(r.route, r.from, r.to, { from: city(a), to: city(b) }) }
     })
-  }, [links, showRoutes, points])
+    // routes?.version: live routes arrived, so routeFor answers differently.
+  }, [links, showRoutes, points, routes?.version]) // eslint-disable-line react-hooks/exhaustive-deps
   const colourOf = (asn: number) => routes?.colours.get(asn) ?? OTHER_AS
   const [focusAs, setFocusAs] = useState<number | null>(null)
   const [hoverLeg, setHoverLeg] = useState<{ leg: Leg; link: Link; rtt: number | null; x: number; y: number } | null>(null)
@@ -420,20 +454,19 @@ export function MapView({
   return (
     <section ref={boxRef} className="panel relative h-full overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-3">
-        <div>
-          <div className="hud text-primary!">指揮中心</div>
-          <div className="mt-0.5 font-mono text-[11px] text-muted">
-            {points.length} 地點 · {lit.shapes.length + lit.spots.length} 國家 · {allLinks.length} 鏈路
-          </div>
+        <div className="flex flex-wrap gap-x-3 font-mono text-[13px] text-muted">
+          <span>{t('{n} 個地點', { n: points.length })}</span>
+          <span>{t('{n} 個國家', { n: lit.shapes.length + lit.spots.length })}</span>
+          <span>{t('{n} 條鏈路', { n: allLinks.length })}</span>
         </div>
-        <div className="pointer-events-auto flex gap-1 rounded-lg border border-line bg-white/85 p-0.5 text-[12px] shadow-sm backdrop-blur">
+        <div className="pointer-events-auto flex flex-wrap justify-end gap-1 rounded-lg border border-line bg-card/85 p-0.5 text-[13px] backdrop-blur">
           {(['globe', 'flat'] as const).map((m) => (
             <button
               key={m}
               onClick={() => onModeChange(m)}
               className={`rounded-md px-2.5 py-1 ${mode === m ? 'bg-primary-soft font-medium text-primary' : 'text-muted hover:text-fg'}`}
             >
-              {m === 'globe' ? '地球' : '平面'}
+              {m === 'globe' ? t('地球') : t('平面')}
             </button>
           ))}
           {mode === 'globe' && (
@@ -444,7 +477,7 @@ export function MapView({
                   pausedUntil.current = 0
                   rotation.toggle()
                 }}
-                title={rotation.on ? '暫停轉動' : '開始轉動'}
+                title={rotation.on ? t('暫停轉動') : t('開始轉動')}
                 className={`flex items-center gap-1 rounded-md px-2.5 py-1 ${
                   rotation.on ? 'bg-primary-soft font-medium text-primary' : 'text-muted hover:text-fg'
                 }`}
@@ -459,7 +492,7 @@ export function MapView({
                     <path d="M5 3.2v9.6L12.5 8 5 3.2Z" />
                   </svg>
                 )}
-                {rotation.on ? '暫停轉動' : '開始轉動'}
+                {rotation.on ? t('暫停轉動') : t('開始轉動')}
               </button>
             </>
           )}
@@ -468,7 +501,7 @@ export function MapView({
               <span className="mx-0.5 w-px self-stretch bg-line" />
               <button
                 onClick={topology.toggle}
-                title={topology.on ? '隱藏拓撲連線' : '顯示拓撲連線'}
+                title={topology.on ? t('隱藏拓撲連線') : t('顯示拓撲連線')}
                 className={`flex items-center gap-1 rounded-md px-2.5 py-1 ${
                   topology.on ? 'bg-primary-soft font-medium text-primary' : 'text-muted hover:text-fg'
                 }`}
@@ -479,12 +512,12 @@ export function MapView({
                   <circle cx="12.5" cy="12" r="1.8" />
                   <path d="M5 10.4 11 5.6M5.3 11.6h5.4" />
                 </svg>
-                拓撲
+                {t('拓撲')}
               </button>
               {routes && topology.on && (
                 <button
                   onClick={routes.toggle}
-                  title={routes.on ? '改回直線連線' : '依實際路由（AS 路徑）畫出連線'}
+                  title={routes.on ? t('改回直線連線') : t('依實際路由（AS 路徑）畫出連線')}
                   className={`flex items-center gap-1 rounded-md px-2.5 py-1 ${
                     routes.on ? 'bg-primary-soft font-medium text-primary' : 'text-muted hover:text-fg'
                   }`}
@@ -494,19 +527,19 @@ export function MapView({
                     <circle cx="2.5" cy="12.5" r="1.2" fill="currentColor" />
                     <circle cx="13.5" cy="7.5" r="1.2" fill="currentColor" />
                   </svg>
-                  路由
+                  {t('路由')}
                 </button>
               )}
             </>
           )}
           <span className="mx-0.5 w-px self-stretch bg-line" />
-          <button onClick={() => zoomBy(1.4)} className="rounded-md px-2 py-1 text-muted hover:text-fg" title="放大">
+          <button onClick={() => zoomBy(1.4)} className="rounded-md px-2 py-1 text-muted hover:text-fg" title={t('放大')}>
             +
           </button>
-          <button onClick={() => zoomBy(1 / 1.4)} className="rounded-md px-2 py-1 text-muted hover:text-fg" title="縮小">
+          <button onClick={() => zoomBy(1 / 1.4)} className="rounded-md px-2 py-1 text-muted hover:text-fg" title={t('縮小')}>
             −
           </button>
-          <button onClick={reset} className="rounded-md px-2 py-1 text-muted hover:text-fg" title="重設縮放">
+          <button onClick={reset} className="rounded-md px-2 py-1 text-muted hover:text-fg" title={t('重設縮放')}>
             ⟲
           </button>
         </div>
@@ -517,7 +550,7 @@ export function MapView({
           hint ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        按住 Ctrl（Mac 為 ⌘）再滾動滑鼠以縮放地圖
+        {t('按住 Ctrl（Mac 為 ⌘）再滾動滑鼠以縮放地圖')}
       </div>
 
       <svg
@@ -533,14 +566,14 @@ export function MapView({
       >
         <defs>
           <radialGradient id="globe-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="86%" stopColor="#2f5bd3" stopOpacity="0" />
-            <stop offset="93%" stopColor="#2f5bd3" stopOpacity="0.10" />
-            <stop offset="100%" stopColor="#2f5bd3" stopOpacity="0" />
+            <stop offset="86%" stopColor={C.grid} stopOpacity="0" />
+            <stop offset="93%" stopColor={C.grid} stopOpacity="0.12" />
+            <stop offset="100%" stopColor={C.grid} stopOpacity="0" />
           </radialGradient>
           <radialGradient id="globe-shade" cx="38%" cy="32%" r="78%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="70%" stopColor="#f1f4f9" />
-            <stop offset="100%" stopColor="#dfe5ee" />
+            <stop offset="0%" stopColor={C.shade[0]} />
+            <stop offset="70%" stopColor={C.shade[1]} />
+            <stop offset="100%" stopColor={C.shade[2]} />
           </radialGradient>
         </defs>
 
@@ -550,7 +583,7 @@ export function MapView({
         <path
           d={path(SPHERE) ?? ''}
           fill={mode === 'globe' ? 'url(#globe-shade)' : C.sea}
-          stroke={mode === 'globe' ? '#ffffff' : '#e2e8f0'}
+          stroke={mode === 'globe' ? C.rim : C.flatRim}
           strokeWidth={mode === 'globe' ? 2 : 1}
         />
         <path d={path(GRATICULE) ?? ''} fill="none" stroke={C.grid} strokeOpacity="0.07" />
@@ -600,7 +633,7 @@ export function MapView({
                   d={d}
                   fill="none"
                   stroke={c.color}
-                  strokeOpacity={lit ? 1 : used ? 0.9 : 0.42}
+                  strokeOpacity={lit ? 1 : used ? 0.9 : C.cableOpacity}
                   strokeWidth={lit ? 2.4 : used ? 1.5 : 0.9}
                   strokeLinejoin="round"
                   strokeLinecap="round"
@@ -649,7 +682,7 @@ export function MapView({
                         strokeLinejoin="round"
                         strokeDasharray={up ? undefined : '4 5'}
                       />
-                      {up && <path d={d} fill="none" stroke="#ffffff" strokeWidth="2" strokeDasharray="3 15" className="flow" />}
+                      {up && <path d={d} fill="none" stroke={C.dot} strokeWidth="2" strokeDasharray="3 15" className="flow" />}
                       <path
                         d={d}
                         fill="none"
@@ -678,8 +711,8 @@ export function MapView({
                           width="4.4"
                           height="4.4"
                           transform={`rotate(45 ${xy[0]} ${xy[1]})`}
-                          fill="#ffffff"
-                          stroke="#475569"
+                          fill={C.dot}
+                          stroke={C.dotRing}
                           strokeWidth="1.2"
                           opacity={focusAs !== null && focusAs !== leg.asn ? 0.15 : 1}
                           pointerEvents="none"
@@ -693,7 +726,7 @@ export function MapView({
                         cx={xy[0]}
                         cy={xy[1]}
                         r={handover ? 3.4 : 2.6}
-                        fill="#ffffff"
+                        fill={C.dot}
                         stroke={colourOf(handover ? leg.asn : p.asn)}
                         strokeWidth={handover ? 2 : 1.5}
                         opacity={focusAs !== null && focusAs !== leg.asn ? 0.15 : 1}
@@ -710,17 +743,17 @@ export function MapView({
           const up = linkUp(l)
           return (
             <g key={i}>
-              <path d={d} fill="none" stroke={up ? C.up : C.down} strokeOpacity="0.12" strokeWidth="5" />
+              <path d={d} fill="none" stroke={up ? C.link : C.down} strokeOpacity="0.14" strokeWidth="5" />
               <path
                 d={d}
                 fill="none"
-                stroke={up ? C.up : C.down}
+                stroke={up ? C.link : C.down}
                 strokeOpacity={up ? 0.85 : 0.7}
                 strokeWidth="1.6"
                 strokeDasharray={up ? undefined : '4 5'}
               />
               {up && (
-                <path d={d} fill="none" stroke="#ffffff" strokeWidth="1.6" strokeDasharray="3 15" className="flow" />
+                <path d={d} fill="none" stroke={C.dot} strokeWidth="1.6" strokeDasharray="3 15" className="flow" />
               )}
             </g>
           )
@@ -732,8 +765,8 @@ export function MapView({
           if (!xy) return null
           return (
             <g key={`c${i}`} transform={`translate(${xy[0]},${xy[1]})`}>
-              <circle r="3.5" fill="#ffffff" stroke="#64748b" strokeWidth="1.2" />
-              <text y="-8" textAnchor="middle" className="fill-muted text-[10px] font-medium">
+              <circle r="3.5" fill={C.dot} stroke={C.city} strokeWidth="1.2" />
+              <text y="-8" textAnchor="middle" className="fill-muted text-[11.5px] font-medium">
                 {ep.label}
               </text>
             </g>
@@ -757,9 +790,9 @@ export function MapView({
               className="cursor-pointer"
             >
               <circle r="10" fill={color} opacity="0.2" className={up ? 'ping-ring' : ''} />
-              <circle r="4.5" fill={color} stroke="#ffffff" strokeWidth="2" />
+              <circle r="4.5" fill={color} stroke={C.dot} strokeWidth="2" />
               {p.nodes.length > 1 && labels === 'off' && (
-                <text x="7" y="-6" className="fill-fg text-[10px] font-semibold">
+                <text x="7" y="-6" className="fill-fg text-[11.5px] font-semibold">
                   {p.nodes.length}
                 </text>
               )}
@@ -780,12 +813,12 @@ export function MapView({
       </svg>
 
       {showRoutes && legend.coloured.length + legend.others.length > 0 && (
-        <div className="absolute bottom-3 left-3 z-10 w-56 rounded-lg border border-line bg-white/90 p-2 text-[11.5px] shadow-sm backdrop-blur">
+        <div className="absolute bottom-3 left-3 z-10 w-64 rounded-lg border border-line bg-card/90 p-2 text-[13px] backdrop-blur">
           <div className="mb-1 flex items-baseline justify-between gap-2 px-1">
-            <span className="hud">AS 路由</span>
+            <span className="hud">{t('AS 路由')}</span>
             {ROUTES && (
-              <span className="font-mono text-[10px] text-muted" title="路由快照時間（mtr 單向追蹤）">
-                {new Date(ROUTES.generated).toLocaleDateString()}
+              <span className="font-mono text-[12px] text-muted" title={t('路由快照時間（mtr 單向追蹤）')}>
+                {new Date(ROUTES.generated).toLocaleDateString(locale())}
               </span>
             )}
           </div>
@@ -800,7 +833,7 @@ export function MapView({
               }`}
             >
               <span className="h-[3px] w-4 shrink-0 rounded-full" style={{ background: colourOf(asn) }} />
-              <span className="shrink-0 font-mono text-[10.5px] text-muted">AS{asn}</span>
+              <span className="shrink-0 font-mono text-[12px] text-muted">AS{asn}</span>
               <span className="min-w-0 truncate">{asName(asn)}</span>
             </button>
           ))}
@@ -810,17 +843,17 @@ export function MapView({
               title={legend.others.map((a) => `AS${a} ${asName(a)}`).join('\n')}
             >
               <span className="h-[3px] w-4 shrink-0 rounded-full" style={{ background: OTHER_AS }} />
-              其他 {legend.others.length} 個網路
+              {t('其他 {n} 個網路', { n: legend.others.length })}
             </div>
           )}
           {cables && (
-            <div className="mt-1 flex items-center gap-2 border-t border-line px-1 pt-1.5 text-[10.5px] text-muted">
+            <div className="mt-1 flex items-center gap-2 border-t border-line px-1 pt-1.5 text-[12px] text-muted">
               <span className="flex h-[3px] w-4 shrink-0 overflow-hidden rounded-full">
                 <span className="flex-1 bg-[#d41f77]" />
                 <span className="flex-1 bg-[#2a9d8f]" />
                 <span className="flex-1 bg-[#e9a23b]" />
               </span>
-              海纜示意路線 · 走哪條為推測
+              {t('海纜示意路線，走哪條為推測')}
             </div>
           )}
         </div>
@@ -828,67 +861,69 @@ export function MapView({
 
       {hoverLeg && (
         <div
-          className="pointer-events-none absolute z-20 w-60 -translate-x-1/2 rounded-lg border border-line bg-white/95 p-2.5 text-[12px] shadow-xl backdrop-blur"
+          className="pointer-events-none absolute z-20 w-60 -translate-x-1/2 rounded-lg border border-line bg-raised/95 p-3 text-[13.5px] shadow-xl backdrop-blur"
           style={{ left: hoverLeg.x, top: hoverLeg.y + 16 }}
         >
           <div className="flex items-center gap-2">
             <span className="h-[3px] w-4 shrink-0 rounded-full" style={{ background: colourOf(hoverLeg.leg.asn) }} />
-            <b className="font-mono">{hoverLeg.leg.asn ? `AS${hoverLeg.leg.asn}` : '交換點'}</b>
+            <b className="font-mono">{hoverLeg.leg.asn ? `AS${hoverLeg.leg.asn}` : t('交換點')}</b>
             <span className="min-w-0 truncate">{asName(hoverLeg.leg.asn)}</span>
           </div>
           <div className="mt-1 text-fg">{legPlaces(hoverLeg.leg)}</div>
           {hoverLeg.leg.cables.length > 0 && (
-            <div className="mt-1 flex items-start gap-1 text-[11px] text-muted">
+            <div className="mt-1 flex items-start gap-1 text-[12.5px] text-muted">
               <span>⚓</span>
               <span>
-                {hoverLeg.leg.cables.filter((c) => c !== PLAIN_SEA).join(' → ') || '跨海段未對應到海纜，沿海面推估'}
-                {hoverLeg.leg.cables.some((c) => c !== PLAIN_SEA) && '（推測）'}
+                {hoverLeg.leg.cables.filter((c) => c !== PLAIN_SEA).join(' → ') || t('跨海段未對應到海纜，沿海面推估')}
+                {hoverLeg.leg.cables.some((c) => c !== PLAIN_SEA) && t('（推測）')}
               </span>
             </div>
           )}
-          <div className="mt-1.5 border-t border-line pt-1.5 text-[11px] text-muted">
-            {epName(hoverLeg.link.from)} → {epName(hoverLeg.link.to)}
-            {hoverLeg.rtt !== null && <span className="ml-1 font-mono">· {hoverLeg.rtt} ms</span>}
+          <div className="mt-1.5 flex justify-between gap-2 border-t border-line pt-1.5 text-[12.5px] text-muted">
+            <span className="min-w-0 truncate">
+              {epName(hoverLeg.link.from)} → {epName(hoverLeg.link.to)}
+            </span>
+            {hoverLeg.rtt !== null && <span className="shrink-0 font-mono">{hoverLeg.rtt} ms</span>}
           </div>
         </div>
       )}
 
       {hoverCable && !hoverLeg && (
         <div
-          className="pointer-events-none absolute z-20 w-64 -translate-x-1/2 rounded-lg border border-line bg-white/95 p-2.5 text-[12px] shadow-xl backdrop-blur"
+          className="pointer-events-none absolute z-20 w-64 -translate-x-1/2 rounded-lg border border-line bg-raised/95 p-3 text-[13.5px] shadow-xl backdrop-blur"
           style={{ left: hoverCable.x, top: hoverCable.y + 16 }}
         >
           <div className="flex items-center gap-2">
             <span className="h-[3px] w-4 shrink-0 rounded-full" style={{ background: hoverCable.cable.color }} />
             <b className="min-w-0 leading-snug">{hoverCable.cable.name}</b>
           </div>
-          <div className="mt-1 text-[11px] text-muted">
+          <div className="mt-1 text-[12.5px] text-muted">
             {[
               hoverCable.cable.planned
-                ? `2022 年時規劃中${hoverCable.cable.rfs ? `，預計 ${hoverCable.cable.rfs}` : ''}`
-                : hoverCable.cable.rfs && `${hoverCable.cable.rfs} 年啟用`,
+                ? `${t('2022 年時規劃中')}${hoverCable.cable.rfs ? `, ${t('預計 {year}', { year: hoverCable.cable.rfs })}` : ''}`
+                : hoverCable.cable.rfs && t('{year} 年啟用', { year: hoverCable.cable.rfs }),
               hoverCable.cable.length,
             ]
               .filter(Boolean)
-              .join(' · ')}
+              .join(', ')}
           </div>
           {hoverCable.cable.owners.length > 0 && (
-            <div className="mt-1 text-[11px] leading-snug text-fg">
-              {hoverCable.cable.owners.slice(0, 5).join('、')}
-              {hoverCable.cable.owners.length > 5 && ` 等 ${hoverCable.cable.owners.length} 家`}
+            <div className="mt-1 text-[12.5px] leading-snug text-fg">
+              {hoverCable.cable.owners.slice(0, 5).join(', ')}
+              {hoverCable.cable.owners.length > 5 && ` ${t('等 {n} 家', { n: hoverCable.cable.owners.length })}`}
             </div>
           )}
-          {usedCables.has(hoverCable.cable.name) && <div className="mt-1 text-[11px] text-muted">⚓ 推測有路由經過</div>}
+          {usedCables.has(hoverCable.cable.name) && <div className="mt-1 text-[12.5px] text-muted">⚓ {t('推測有路由經過')}</div>}
         </div>
       )}
 
       {showRoutes && cables && (
-        <div className="absolute right-3 bottom-2 z-10 rounded bg-white/75 px-1.5 py-0.5 text-[10px] text-muted backdrop-blur">
-          海纜資料 ©{' '}
+        <div className="absolute right-3 bottom-2 z-10 rounded bg-card/75 px-1.5 py-0.5 text-[11.5px] text-muted backdrop-blur">
+          {t('海纜資料 ©')}{' '}
           <a href={cables.source.url} target="_blank" rel="noreferrer" className="underline decoration-dotted hover:text-fg">
             {cables.source.author}
           </a>{' '}
-          {cables.source.snapshot.slice(0, 4)} ·{' '}
+          {cables.source.snapshot.slice(0, 4)},{' '}
           <a href={cables.source.licenseUrl} target="_blank" rel="noreferrer" className="underline decoration-dotted hover:text-fg">
             {cables.source.license}
           </a>
@@ -897,7 +932,7 @@ export function MapView({
 
       {hover && (
         <div
-          className="pointer-events-none absolute z-20 w-64 -translate-x-1/2 rounded-lg border border-line bg-white/95 p-2.5 text-[12px] shadow-xl backdrop-blur"
+          className="pointer-events-none absolute z-20 w-64 -translate-x-1/2 rounded-lg border border-line bg-raised/95 p-3 text-[13.5px] shadow-xl backdrop-blur"
           style={{
             left: hover.x,
             top: hover.y + 14,
@@ -913,7 +948,7 @@ export function MapView({
                   {(n.metrics.cpu ?? 0).toFixed(0)}% · ↓{speed(n.metrics.net_rx)}
                 </span>
               ) : (
-                <span className="shrink-0 text-bad">離線</span>
+                <span className="shrink-0 text-bad">{t('離線')}</span>
               )}
             </div>
           ))}

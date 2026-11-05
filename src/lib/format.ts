@@ -1,3 +1,4 @@
+import { locale, t } from './i18n'
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 export function bytes(n: number | undefined | null, digits = 2): string {
@@ -36,22 +37,22 @@ export function duration(sec: number | undefined | null): string {
   const d = Math.floor(sec / 86400)
   const h = Math.floor((sec % 86400) / 3600)
   const m = Math.floor((sec % 3600) / 60)
-  if (d > 0) return `${d} 天 ${h} 小時`
-  if (h > 0) return `${h} 小時 ${m} 分`
-  return `${m} 分`
+  if (d > 0) return t('{d} 天 {h} 小時', { d, h })
+  if (h > 0) return t('{h} 小時 {m} 分', { h, m })
+  return t('{m} 分', { m })
 }
 
 export function expiry(days: number | null | undefined): string {
   if (days === undefined || days === null) return '∞'
-  if (days < 0) return `已過期 ${-days} 天`
-  if (days === 0) return '今天到期'
-  return `${days} 天後到期`
+  if (days < 0) return t('已過期 {d} 天', { d: -days })
+  if (days === 0) return t('今天到期')
+  return t('{d} 天後到期', { d: days })
 }
 
 export function money(amount: number | undefined, currency: string | undefined): string {
   if (!amount || !currency) return ''
   try {
-    return new Intl.NumberFormat('zh-CN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(amount)
+    return new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 2 }).format(amount)
   } catch {
     return `${amount} ${currency}`
   }
@@ -69,7 +70,7 @@ const CYCLES: Record<string, string> = {
 
 export function cycle(c: string | undefined): string {
   if (!c) return ''
-  if (CYCLES[c]) return CYCLES[c]
+  if (CYCLES[c]) return t(CYCLES[c])
   const m = /^(\d+)m$/.exec(c)
-  return m ? `${m[1]} 個月` : ''
+  return m ? t('{n} 個月', { n: m[1] }) : ''
 }

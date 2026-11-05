@@ -39,3 +39,7 @@ relay.local.json
 # cable map). The public theme ships without them; see README.
 src/data/*.json
 scripts/data/*.json
+
+# Dev tooling installed with `npx skills add` (agent skills), not part of the theme
+.claude/
+skills-lock.json

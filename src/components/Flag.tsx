@@ -13,7 +13,7 @@ export function Flag({ code, className = 'h-3.5 w-5' }: { code?: string; classNa
   const src = flagDataUrl(code)
   if (!src) {
     return (
-      <span className={`${className} inline-flex items-center justify-center rounded-[2px] bg-slate-200 text-[8px] text-muted`}>
+      <span className={`${className} inline-flex items-center justify-center rounded-[2px] bg-line text-[8px] text-muted`}>
         {code?.toUpperCase() || '??'}
       </span>
     )

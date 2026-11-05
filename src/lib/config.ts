@@ -19,6 +19,8 @@ export interface ThemeConfig {
   ping_lines: string
   offline_last: boolean
   notice: string
+  default_lang: 'auto' | 'zh-Hant' | 'zh-Hans' | 'en'
+  color_scheme: 'system' | 'light' | 'dark'
 }
 
 type Item = {

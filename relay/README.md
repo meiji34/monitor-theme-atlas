@@ -1,8 +1,9 @@
-# Streaming-check relay (流媒體即時檢測)
+# Relay: live streaming checks and route tracing
 
-Lets the theme show live streaming-check results and lets a logged-in hub
-admin press 「點擊檢測」 / 「重新檢測」. Without it the theme falls back to the
-snapshot bundled by `scripts/media.mjs`.
+Lets the theme show live streaming-check results and traced routes, and lets
+a logged-in hub admin press 「點擊檢測」 / 「重新檢測」 and 「追蹤路由」 / 「重新追蹤」.
+Without it the theme falls back to the snapshots bundled by `scripts/media.mjs`
+and `scripts/routes.mjs`.
 
 ```
 browser ──/atlas-media/──▶ reverse proxy ──▶ media-relay (127.0.0.1:28090, next to the hub)
@@ -26,6 +27,24 @@ node: media-check.timer, every minute ────────────┘   
 - **What's public**: `GET /atlas-media/results` returns verdicts and country
   codes only, never addresses.
 
+## Route tracing
+
+The source node (the first link in `routes.local.json`, `"1>*"` → node 1) traces
+to every other node: when the relay hands it a job, its agent runs
+`mtr -rwbz -c 3 --json <address>` and posts the report. The relay turns it into
+a route with `route_build.py` (a Python port of `scripts/routes.mjs`: city codes
+in reverse DNS, ip-api for the rest, impossible or detour locations dropped,
+sea crossings along the cable data when installed) and serves it without any
+address. Targets come from `/etc/media-relay/nodes.json` (written from
+`routes.local.json`, root only), or for a node not listed there, the address its
+agent polls from; positions not given there come from ip-api. So a **new node
+gets its route on its own** once its agent is installed. Every route is
+refreshed once a day; an admin can ask for one sooner (10 minutes apart per node).
+
+On the source node, mtr's raw-socket right is a file capability, which
+`NoNewPrivileges` would strip; its installer adds
+`media-check.service.d/trace.conf` with `NoNewPrivileges=no`.
+
 ## API
 
 | Request | Who | Does |
@@ -34,6 +53,10 @@ node: media-check.timer, every minute ────────────┘   
 | `POST /atlas-media/check/<id>` | logged-in admin, `X-Atlas: 1` | queue a check (202), 401 not logged in, 429 cooldown |
 | `GET /atlas-media/agent/<id>` | node, `Authorization: Bearer <token>` | `1` when a check is due, else `0` |
 | `POST /atlas-media/agent/<id>` | node, bearer token | the probe output; stored as verdicts |
+| `GET /atlas-media/routes` | anyone | `{routes, asns, pending, traceable, sourceAlive, …}` |
+| `POST /atlas-media/trace/<id>` | logged-in admin, `X-Atlas: 1` | queue a trace to that node |
+| `GET /atlas-media/agent/<src>/jobs` | source node, bearer token | `trace <id> <address>` lines |
+| `POST /atlas-media/agent/<src>/trace/<id>` | source node, bearer token | the mtr report |
 
 The verdict rules exist twice, in `media-relay.py` and in `scripts/media.mjs`
 (the snapshot); change both together.

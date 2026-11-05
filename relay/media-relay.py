@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Streaming-check relay for the Atlas theme.
+"""Streaming-check and route-tracing relay for the Atlas theme.
 
 Runs next to the monitor hub (standard library only), listening on 127.0.0.1;
 the site's reverse proxy forwards /atlas-media/ to it. It keeps the latest
@@ -9,6 +9,15 @@ verdicts per node and a queue of requested checks:
   POST /atlas-media/check/<id>    a logged-in hub admin asks for a check
   GET  /atlas-media/agent/<id>    a node asks whether a check is due ("1"/"0")
   POST /atlas-media/agent/<id>    a node posts its probe output (key<TAB>value)
+
+and traced routes from the source node (TRACE_FROM) to every other node:
+
+  GET  /atlas-media/routes                 public: routes (no addresses)
+  POST /atlas-media/trace/<id>             a logged-in hub admin asks for a trace
+  GET  /atlas-media/agent/<src>/jobs       the source node asks what to trace
+  POST /atlas-media/agent/<src>/trace/<id> it posts the mtr report
+New nodes get traced on their own once their agent has polled; every route
+is refreshed once a day.
 
 Admins are recognised by passing their cookie to the hub's own /api/me. Nodes
 authenticate with a per-node token. Nodes only ever connect out to the hub;
@@ -33,6 +42,8 @@ PREFIX = '/atlas-media'
 COOLDOWN = int(os.environ.get('COOLDOWN', '600'))  # s between checks someone can ask for, per node
 EVERY = int(os.environ.get('EVERY', '86400'))  # s after which a node re-checks on its own
 MAX_BODY = 32 * 1024
+ALIVE = 300  # s since a node's last poll for it to count as running the agent
+STALE = 600  # s after which a request no node picked up is dropped
 
 with open(TOKENS, encoding='utf-8') as f:
     TOKEN = {str(k): str(v) for k, v in json.load(f).items()}
@@ -46,6 +57,119 @@ except (OSError, ValueError):
 state.setdefault('nodes', {})  # id -> {checked, services}
 state.setdefault('pending', {})  # id -> epoch asked
 state.setdefault('asked', {})  # id -> epoch of the last request
+state.setdefault('routes', {})  # target id -> route from the source node
+state.setdefault('asns', {})  # AS number -> holder name, for the routes
+state.setdefault('trace_pending', {})  # target id -> epoch asked
+state.setdefault('trace_asked', {})  # target id -> epoch of the last request
+seen = {}  # id -> epoch of the node's last poll (memory only: nodes poll every minute)
+addr = {}  # id -> the address a node polls from (memory only, never served)
+sent = {}  # target id -> epoch a trace job went out to the source node
+geo_cache = {}  # address -> ip-api answer
+
+try:
+    import route_build
+except Exception as e:  # tables not installed: route tracing stays off
+    print(f'route tracing off: {e}', flush=True)
+    route_build = None
+try:
+    with open(os.environ.get('NODES') or os.path.join(os.environ.get('CREDENTIALS_DIRECTORY', '.'), 'nodes'), encoding='utf-8') as f:
+        NODEINFO = json.load(f)
+except (OSError, ValueError):
+    NODEINFO = {}
+NODEINFO.setdefault('nodes', {})
+SOURCE = os.environ.get('TRACE_FROM') or str(NODEINFO.get('source') or '1')
+IPV4 = re.compile(r'\b\d{1,3}(?:\.\d{1,3}){3}\b')
+
+
+def target_of(node):
+    return (NODEINFO['nodes'].get(node) or {}).get('ip') or addr.get(node)
+
+
+def traceable():
+    if not route_build:
+        return []
+    ids = set(TOKEN) | set(NODEINFO['nodes'])
+    return sorted((n for n in ids if n != SOURCE and target_of(n)), key=int)
+
+
+def endpoint(node):
+    """Address and position of a node: from nodes.json, else ip-api."""
+    info = NODEINFO['nodes'].get(node) or {}
+    ip = target_of(node)
+    out = {'ip': ip, 'at': info.get('at'), 'cc': info.get('cc')}
+    if not out['at'] and ip:
+        if ip not in geo_cache:
+            geo_cache.update(route_build.ip_api([ip]))
+        g = geo_cache.get(ip)
+        if g:
+            out['at'], out['cc'] = [g['lon'], g['lat']], g.get('countryCode')
+    return out if out['at'] else None
+
+
+def process_trace(to, text):
+    try:
+        src, dst = endpoint(SOURCE), endpoint(to)
+        if not src or not dst:
+            raise ValueError('no position for an endpoint')
+        hops = route_build.parse_mtr(text)
+        lookup = sorted({h['ip'] for h in hops if h['ip'] and not route_build.PRIVATE.match(h['ip']) and h['ip'] not in (src['ip'], dst['ip'])})
+        geo = route_build.ip_api(lookup)
+        names = {}
+        route = route_build.build_route(hops, src, dst, geo, names)
+        used = {h['asn'] for h in route['hops'] if h['asn']} | ({route['dstAsn']} if route['dstAsn'] else set())
+        known = {int(k) for k in state['asns']}
+        names.update(route_build.as_names([n for n in used if n not in route_build.AS_NAMES and n not in names and n not in known]))
+
+        def label(n):
+            return route_build.AS_NAMES.get(n) or names.get(n) or state['asns'].get(str(n), '')
+
+        route_build.add_crossings(route, src, dst, label)
+        route = {'from': int(SOURCE), 'to': int(to), 'traced': now_iso(), **route}
+        if IPV4.search(json.dumps(route)):
+            raise ValueError('route would carry an address')
+        with lock:
+            state['routes'][to] = route
+            for n in used:
+                if label(n):
+                    state['asns'][str(n)] = label(n)
+            state['trace_pending'].pop(to, None)
+            save()
+        print(f'traced {SOURCE}>{to}: {len(route["hops"])} hops, reached={route["reached"]}', flush=True)
+    except Exception as e:
+        print(f'trace {SOURCE}>{to} failed: {e}', flush=True)
+        with lock:
+            state['trace_pending'].pop(to, None)
+            save()
+
+
+def trace_jobs():
+    """Targets the source node should trace now (two per poll at most)."""
+    now = time.time()
+    jobs = []
+    with lock:
+        for to in traceable():
+            if now - sent.get(to, 0) < STALE:
+                continue  # handed out lately, still running
+            route = state['routes'].get(to)
+            due = to in state['trace_pending'] or not route or now - epoch(route.get('traced')) > EVERY
+            if due:
+                jobs.append((to, target_of(to)))
+                sent[to] = now
+            if len(jobs) == 2:
+                break
+    return jobs
+
+
+def prune():
+    """Drop requests nobody picked up (node offline, or no agent on it)."""
+    now = time.time()
+    for node, at in list(state['pending'].items()):
+        if now - at > STALE:
+            del state['pending'][node]
+
+
+def alive(node):
+    return time.time() - seen.get(node, 0) < ALIVE
 
 
 def save():
@@ -247,18 +371,50 @@ class Handler(BaseHTTPRequestHandler):
         parts = self.route()
         if parts == ['results']:
             with lock:
+                prune()
                 body = {
                     'nodes': state['nodes'],
                     'pending': sorted(state['pending'], key=int),
                     'known': sorted(TOKEN, key=int),
+                    # Nodes whose agent polled lately: only these can take a request.
+                    'agents': sorted((n for n in TOKEN if alive(n)), key=int),
                     'cooldown': COOLDOWN,
                 }
             return self.reply(200, body)
+        if parts == ['routes']:
+            with lock:
+                now = time.time()
+                for to, at in list(state['trace_pending'].items()):
+                    if now - at > STALE:
+                        del state['trace_pending'][to]
+                body = {
+                    'enabled': route_build is not None,
+                    'source': SOURCE,
+                    'routes': list(state['routes'].values()),
+                    'asns': state['asns'],
+                    'pending': sorted(state['trace_pending'], key=int),
+                    'traceable': traceable(),
+                    'sourceAlive': alive(SOURCE),
+                    'cooldown': COOLDOWN,
+                }
+            return self.reply(200, body)
+        if len(parts) == 3 and parts[0] == 'agent' and parts[2] == 'jobs':
+            node = parts[1]
+            if not self.node_token_ok(node):
+                return self.reply(403, {'error': 'token'})
+            if node != SOURCE or not route_build:
+                return self.reply(200, b'')
+            lines = ''.join(f'trace {to} {ip}\n' for to, ip in trace_jobs())
+            return self.reply(200, lines.encode())
         if len(parts) == 2 and parts[0] == 'agent':
             node = parts[1]
             if not self.node_token_ok(node):
                 return self.reply(403, {'error': 'token'})
+            ip = self.headers.get('X-Real-IP')
+            if ip:
+                addr[node] = ip
             with lock:
+                seen[node] = time.time()
                 last = epoch(state['nodes'].get(node, {}).get('checked'))
                 due = node in state['pending'] or time.time() - last > EVERY
             return self.reply(200, b'1' if due else b'0')
@@ -280,6 +436,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(404, {'error': 'node'})
             if not hub_admin(self.headers.get('Cookie')):
                 return self.reply(401, {'error': 'login'})
+            if not alive(node):
+                return self.reply(409, {'error': 'agent'})
             with lock:
                 last = max(state['asked'].get(node, 0), epoch(state['nodes'].get(node, {}).get('checked')))
                 wait = int(COOLDOWN - (time.time() - last))
@@ -289,6 +447,39 @@ class Handler(BaseHTTPRequestHandler):
                 state['asked'][node] = time.time()
                 save()
             return self.reply(202, {'pending': True})
+        if len(parts) == 2 and parts[0] == 'trace':
+            to = parts[1]
+            if self.headers.get('X-Atlas') != '1':
+                return self.reply(403, {'error': 'header'})
+            origin = self.headers.get('Origin')
+            if origin and origin.split('://', 1)[-1] != self.headers.get('Host', ''):
+                return self.reply(403, {'error': 'origin'})
+            if to not in traceable():
+                return self.reply(404, {'error': 'node'})
+            if not hub_admin(self.headers.get('Cookie')):
+                return self.reply(401, {'error': 'login'})
+            if not alive(SOURCE):
+                return self.reply(409, {'error': 'agent'})
+            with lock:
+                last = max(state['trace_asked'].get(to, 0), epoch((state['routes'].get(to) or {}).get('traced')))
+                wait = int(COOLDOWN - (time.time() - last))
+                if to not in state['trace_pending'] and wait > 0:
+                    return self.reply(429, {'error': 'cooldown', 'retry': wait}, {'Retry-After': str(wait)})
+                state['trace_pending'][to] = state['trace_pending'].get(to) or time.time()
+                state['trace_asked'][to] = time.time()
+                sent.pop(to, None)
+                save()
+            return self.reply(202, {'pending': True})
+        if len(parts) == 4 and parts[0] == 'agent' and parts[2] == 'trace':
+            node, to = parts[1], parts[3]
+            if not self.node_token_ok(node) or node != SOURCE or not route_build:
+                return self.reply(403, {'error': 'token'})
+            size = int(self.headers.get('Content-Length') or 0)
+            if size <= 0 or size > 512 * 1024:
+                return self.reply(413, {'error': 'size'})
+            text = self.rfile.read(size).decode('utf-8', 'replace')
+            threading.Thread(target=process_trace, args=(to, text), daemon=True).start()
+            return self.reply(202)
         if len(parts) == 2 and parts[0] == 'agent':
             node = parts[1]
             if not self.node_token_ok(node):
@@ -308,5 +499,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    print(f'media-relay on 127.0.0.1:{PORT}, {len(TOKEN)} nodes', flush=True)
+    print(f'media-relay on 127.0.0.1:{PORT}, {len(TOKEN)} nodes, tracing from #{SOURCE}: {"on" if route_build else "off"}', flush=True)
     ThreadingHTTPServer(('127.0.0.1', PORT), Handler).serve_forever()

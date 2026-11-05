@@ -7,7 +7,10 @@ import type { VisitorSettings } from './components/Settings'
 import { Summary } from './components/Summary'
 import { TopNav } from './components/TopNav'
 import { fetchMe } from './lib/api'
+import { browserLang, setLang, t, type Lang } from './lib/i18n'
+import { DarkContext, SCHEMES } from './lib/scheme'
 import { MediaContext, useMediaProvider } from './lib/useMedia'
+import { RoutesContext, useRoutesProvider } from './lib/useRoutes'
 import { useThemeConfig } from './lib/config'
 import { hubTopology, locate, parseLocations, parseTopology, type LngLat, type Place } from './lib/geo'
 import { useLiveNodes, usePingSeries } from './lib/live'
@@ -55,6 +58,7 @@ function usePref<T extends string>(key: string, fallback: T, allowed: readonly T
 }
 
 const LABELS = ['speed', 'name', 'name_speed', 'off'] as const
+const LANG_IDS = ['zh-Hant', 'zh-Hans', 'en'] as const
 const ON_OFF = ['on', 'off'] as const
 
 export default function App() {
@@ -63,6 +67,7 @@ export default function App() {
   const { nodes, loaded, error, mode: liveMode } = useLiveNodes()
   const [me, setMe] = useState<Me>({})
   const media = useMediaProvider(!!me.authed)
+  const liveRoutes = useRoutesProvider(!!me.authed)
   const [group, setGroup] = useState<GroupKey>(ALL)
   const [query, setQuery] = useState('')
   const [focus, setFocus] = useState<LngLat | null>(null)
@@ -73,12 +78,31 @@ export default function App() {
   const [lit, setLit, resetLit] = usePref('atlas:lit', cfg.light_countries ? 'on' : 'off', ON_OFF)
   const [routesPref, setRoutes, resetRoutes] = usePref('atlas:routes', cfg.topology_routes ? 'on' : 'off', ON_OFF)
   const [selected, setSelected] = useState<number | null>(null)
+  const [lang, setLangPref, resetLang] = usePref<Lang>(
+    'atlas:lang',
+    cfg.default_lang === 'auto' ? browserLang() : cfg.default_lang,
+    LANG_IDS,
+  )
+  // t() reads the module-level language; set it before anything below renders.
+  setLang(lang)
+  const [scheme, setScheme, resetScheme] = usePref('atlas:scheme', cfg.color_scheme, SCHEMES)
+  const [systemDark, setSystemDark] = useState(() => matchMedia('(prefers-color-scheme: dark)').matches)
+  useEffect(() => {
+    const mq = matchMedia('(prefers-color-scheme: dark)')
+    const on = () => setSystemDark(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  const dark = scheme === 'dark' || (scheme === 'system' && systemDark)
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  }, [dark])
 
   useEffect(() => {
     fetchMe().then(setMe, () => {})
   }, [])
   useEffect(() => {
-    if (me.site_name) document.title = me.site_name
+    document.title = me.site_name && me.site_name !== 'Monitor' ? `${me.site_name} · Atlas` : 'Atlas'
   }, [me.site_name])
 
   const sorted = useMemo(() => {
@@ -136,8 +160,9 @@ export default function App() {
     return hubTopology(cfg.topology_hub, sorted, places)
   }, [cfg.topology, cfg.topology_mode, cfg.topology_hub, sorted, places])
   // Traced routes only matter when some shown link has one.
-  const hasRoutes = useMemo(() => links.some((l) => routeFor(l)), [links])
-  const asColour = useMemo(() => asColours(places), [places])
+  // (liveRoutes.version: the relay delivered new routes, so routeFor changed.)
+  const hasRoutes = useMemo(() => links.some((l) => routeFor(l)), [links, liveRoutes.version]) // eslint-disable-line react-hooks/exhaustive-deps
+  const asColour = useMemo(() => asColours(places), [places, liveRoutes.version]) // eslint-disable-line react-hooks/exhaustive-deps
   const routesOn = hasRoutes && topo === 'on' && routesPref === 'on'
 
   const ids = useMemo(() => sorted.map((n) => n.id), [sorted])
@@ -157,7 +182,7 @@ export default function App() {
     <button
       key={typeof key === 'string' ? key : key.toString()}
       onClick={() => setGroup(key)}
-      className={`rounded-md px-3 py-1.5 text-[13px] ${
+      className={`rounded-md px-3 py-1.5 text-[14px] ${
         group === key ? 'bg-primary-soft font-medium text-primary' : 'text-muted hover:text-fg'
       }`}
     >
@@ -167,16 +192,16 @@ export default function App() {
 
   const toolbar = (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <nav className="flex flex-wrap gap-1 rounded-lg border border-line bg-white p-1 shadow-sm">
-        {tab(ALL, '全部', sorted.length)}
+      <nav className="flex flex-wrap gap-1 rounded-lg border border-line bg-card p-1">
+        {tab(ALL, t('全部'), sorted.length)}
         {groups.map((g) => tab(g, g, sorted.filter((n) => n.group === g).length))}
-        {hasUngrouped && groups.length > 0 && tab(UNGROUPED, '未分組', sorted.filter((n) => !n.group).length)}
+        {hasUngrouped && groups.length > 0 && tab(UNGROUPED, t('未分組'), sorted.filter((n) => !n.group).length)}
       </nav>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="搜尋名稱／國家／架構"
-        className="w-56 rounded-lg border border-line bg-white px-3 py-2 text-[13px] shadow-sm outline-none placeholder:text-muted focus:border-primary/50"
+        placeholder={t('搜尋名稱／國家／架構')}
+        className="w-60 rounded-lg border border-line bg-card px-3 py-2 text-[14px] outline-none placeholder:text-muted focus:border-primary/60"
       />
     </div>
   )
@@ -190,6 +215,7 @@ export default function App() {
           lines={linesFor(n)}
           onFocus={withFocus ? () => focusNode(n) : undefined}
           showMedia={cfg.show_media}
+          place={places.get(n.id)}
         />
       ))}
     </main>
@@ -208,12 +234,17 @@ export default function App() {
     setLabels,
     lit: lit === 'on',
     setLit: (v) => setLit(v ? 'on' : 'off'),
-    reset: () => [resetMapMode, resetTopo, resetSpin, resetLabels, resetLit, resetRoutes].forEach((r) => r()),
+    lang,
+    setLang: setLangPref,
+    scheme,
+    setScheme,
+    reset: () =>
+      [resetMapMode, resetTopo, resetSpin, resetLabels, resetLit, resetRoutes, resetLang, resetScheme].forEach((r) => r()),
   }
 
   let body: React.ReactNode
   if (!loaded) {
-    body = <div className="py-20 text-center text-muted">載入中…</div>
+    body = <div className="py-20 text-center text-muted">{t('載入中…')}</div>
   } else if (route.view === 'node') {
     body = <NodeDetail id={route.id} nodes={sorted} historyDays={me.history_days ?? 30} showMedia={cfg.show_media} />
   } else if (route.view === 'cards') {
@@ -254,7 +285,7 @@ export default function App() {
       focusNode(n)
     }
     body = (
-      <section className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-7.75rem)] lg:min-h-[540px] lg:grid-cols-[minmax(0,1fr)_380px]">
+      <section className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-8.25rem)] lg:min-h-[540px] lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="relative h-[62vh] min-h-[380px] lg:h-full">
           <MapView
             fill
@@ -284,6 +315,7 @@ export default function App() {
                     on: routesOn,
                     toggle: () => setRoutes(routesPref === 'on' ? 'off' : 'on'),
                     colours: asColour,
+                    version: liveRoutes.version,
                   }
                 : null
             }
@@ -304,6 +336,7 @@ export default function App() {
               asColour={asColour}
               placeLabel={(id) => places.get(id)?.label ?? `#${id}`}
               showMedia={cfg.show_media}
+              routesOn={routesOn}
             />
           ) : (
             <NodeList nodes={sorted} onFocus={select} />
@@ -314,29 +347,33 @@ export default function App() {
   }
 
   return (
-    <MediaContext.Provider value={media}>
-      <TopNav
-        settings={settings}
-        authed={!!me.authed}
-        route={route}
-        siteName={me.site_name || 'Monitor'}
-        online={sorted.filter((n) => n.online).length}
-        total={sorted.length}
-      />
-      <div className="page-w mx-auto flex flex-col gap-4 px-4 pt-4 pb-14 sm:px-6">
-        {cfg.notice && (
-          <div className="rounded-lg border border-warn/30 bg-warn/5 px-4 py-2.5 text-[13px] text-warn">{cfg.notice}</div>
-        )}
-        {error && !nodes.length && (
-          <div className="rounded-lg border border-bad/30 bg-bad/5 px-4 py-2.5 text-[13px] text-bad">
-            無法取得節點資料：{error}
+    <DarkContext.Provider value={dark}>
+      <MediaContext.Provider value={media}>
+        <RoutesContext.Provider value={liveRoutes}>
+          <TopNav
+            settings={settings}
+            authed={!!me.authed}
+            route={route}
+            siteName={me.site_name && me.site_name !== 'Monitor' ? me.site_name : ''}
+            online={sorted.filter((n) => n.online).length}
+            total={sorted.length}
+          />
+          <div className="page-w mx-auto flex flex-col gap-4 px-4 pt-4 pb-14 sm:px-6">
+            {cfg.notice && (
+              <div className="rounded-lg border border-warn/30 bg-warn/5 px-4 py-2.5 text-[13px] text-warn">{cfg.notice}</div>
+            )}
+            {error && !nodes.length && (
+              <div className="rounded-lg border border-bad/30 bg-bad/5 px-4 py-2.5 text-[13px] text-bad">
+                {t('無法取得節點資料：{error}', { error })}
+              </div>
+            )}
+
+            {body}
+
+            <StatusBar nodes={sorted} live={liveMode} />
           </div>
-        )}
-
-        {body}
-
-        <StatusBar nodes={sorted} live={liveMode} />
-      </div>
-    </MediaContext.Provider>
+        </RoutesContext.Provider>
+      </MediaContext.Provider>
+    </DarkContext.Provider>
   )
 }

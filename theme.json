@@ -1,8 +1,8 @@
 {
   "name": "Atlas",
   "short": "atlas",
-  "description": "卡片牆 + 地球／平面地圖 + 節點拓撲",
-  "version": "0.12.0",
+  "description": "海圖風格的地球／平面地圖、節點拓撲、真實路由與流媒體檢測，支援深色與三種語言",
+  "version": "0.14.0",
   "author": "yddsfj",
   "url": "https://github.com/meiji34/monitor-theme-atlas",
   "config": [
@@ -91,6 +91,31 @@
     },
     { "key": "offline_last", "type": "boolean", "label": "離線節點排在最後", "default": true },
     { "type": "title", "label": "網站" },
-    { "key": "notice", "type": "string", "label": "公告", "default": "", "help": "顯示在頁面頂部的一行純文字，留空則不顯示" }
+    { "key": "notice", "type": "string", "label": "公告", "default": "", "help": "顯示在頁面頂部的一行純文字，留空則不顯示" },
+    {
+      "key": "default_lang",
+      "type": "select",
+      "label": "預設語言",
+      "default": "auto",
+      "options": [
+        { "value": "auto", "label": "依訪客瀏覽器" },
+        { "value": "zh-Hant", "label": "繁體中文" },
+        { "value": "zh-Hans", "label": "简体中文" },
+        { "value": "en", "label": "English" }
+      ],
+      "help": "訪客也可以在頂部的語言選單自行切換"
+    },
+    {
+      "key": "color_scheme",
+      "type": "select",
+      "label": "預設外觀",
+      "default": "system",
+      "options": [
+        { "value": "system", "label": "跟隨訪客系統" },
+        { "value": "light", "label": "淺色" },
+        { "value": "dark", "label": "深色" }
+      ],
+      "help": "訪客也可以在設定選單自行切換"
+    }
   ]
 }

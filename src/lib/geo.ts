@@ -96,6 +96,10 @@ export const ISO_NUMERIC: Record<string, string> = {
   PT: '620', RO: '642', UA: '804', KZ: '398', IL: '376', SA: '682', AR: '032', CL: '152', EG: '818',
 }
 
+// "37.81°S 144.96°E": where a node sits, the way a chart labels a position.
+export const coordText = ([lng, lat]: LngLat) =>
+  `${Math.abs(lat).toFixed(2)}°${lat < 0 ? 'S' : 'N'} ${Math.abs(lng).toFixed(2)}°${lng < 0 ? 'W' : 'E'}`
+
 export const countryCentre = (cc: string | undefined): LngLat | null =>
   (cc && COUNTRIES[cc.toUpperCase()]) || null
 

@@ -1,17 +1,18 @@
 import { bytes, pct, speed } from '../lib/format'
+import { t } from '../lib/i18n'
 import type { Node } from '../lib/types'
 
 function Tile({ label, value, sub, bar }: { label: string; value: string; sub?: string; bar?: number }) {
   return (
     <div className="panel px-4 py-3">
       <div className="hud">{label}</div>
-      <div className="mt-1 font-mono text-xl font-bold tabular-nums">{value}</div>
+      <div className="mt-0.5 font-display text-[28px] leading-tight font-semibold">{value}</div>
       {bar !== undefined && (
-        <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-primary-soft">
           <div className="h-full rounded-full bg-primary" style={{ width: `${bar}%` }} />
         </div>
       )}
-      {sub && <div className="mt-1.5 truncate font-mono text-[11px] text-muted">{sub}</div>}
+      {sub && <div className="mt-1.5 truncate font-mono text-[13px] text-muted">{sub}</div>}
     </div>
   )
 }
@@ -28,14 +29,24 @@ export function Summary({ nodes }: { nodes: Node[] }) {
   const countries = new Set(nodes.map((n) => n.country).filter(Boolean)).size
   return (
     <section className="grid grid-cols-2 gap-3 md:grid-cols-5">
-      <Tile label="節點在線" value={`${online.length} / ${nodes.length}`} sub={`${countries} 個國家／地區`} />
-      <Tile label="CPU" value={`${avgCpu.toFixed(1)}%`} sub={`${cores} 核`} bar={avgCpu} />
-      <Tile label="記憶體" value={`${pct(memUsed, memTotal).toFixed(0)}%`} sub={`${bytes(memUsed)} / ${bytes(memTotal)}`} bar={pct(memUsed, memTotal)} />
-      <Tile label="硬碟" value={`${pct(diskUsed, diskTotal).toFixed(0)}%`} sub={`${bytes(diskUsed)} / ${bytes(diskTotal)}`} bar={pct(diskUsed, diskTotal)} />
+      <Tile label={t('節點在線')} value={`${online.length} / ${nodes.length}`} sub={t('{n} 個國家／地區', { n: countries })} />
+      <Tile label="CPU" value={`${avgCpu.toFixed(1)}%`} sub={t('{n} 核', { n: cores })} bar={avgCpu} />
       <Tile
-        label="即時網速"
+        label={t('記憶體')}
+        value={`${pct(memUsed, memTotal).toFixed(0)}%`}
+        sub={`${bytes(memUsed)} / ${bytes(memTotal)}`}
+        bar={pct(memUsed, memTotal)}
+      />
+      <Tile
+        label={t('硬碟')}
+        value={`${pct(diskUsed, diskTotal).toFixed(0)}%`}
+        sub={`${bytes(diskUsed)} / ${bytes(diskTotal)}`}
+        bar={pct(diskUsed, diskTotal)}
+      />
+      <Tile
+        label={t('即時網速')}
         value={speed(sum((n) => n.metrics?.net_rx) + sum((n) => n.metrics?.net_tx))}
-        sub={`今日 ↑${bytes(sum((n) => n.day_tx))} ↓${bytes(sum((n) => n.day_rx))}`}
+        sub={t('今日 ↑{up} ↓{down}', { up: bytes(sum((n) => n.day_tx)), down: bytes(sum((n) => n.day_rx)) })}
       />
     </section>
   )

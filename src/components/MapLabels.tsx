@@ -1,4 +1,5 @@
 import { compactRate } from '../lib/format'
+import { t as tr } from '../lib/i18n'
 import { DOWN, UP } from '../lib/palette'
 import { flagDataUrl } from './Flag'
 import type { MapPoint } from './MapView'
@@ -43,21 +44,20 @@ function parts(p: MapPoint, mode: LabelMode) {
 }
 
 // SVG collapses runs of spaces, so pieces are separate tspans spaced with dx.
-// Arrows carry the series colour; numbers stay in text ink.
-const INK = '#0f172a'
+// Arrows carry the series colour; numbers stay in text ink (theme classes).
 interface Segment {
   text: string
-  fill: string
+  tone: string
   sans?: boolean
   arrow?: string
 }
 function segments(t: ReturnType<typeof parts>): Segment[] {
   const out: Segment[] = []
-  if (t.name) out.push({ text: t.name, fill: INK, sans: true })
-  if (t.up) out.push({ text: t.up, fill: INK, arrow: UP })
-  if (t.down) out.push({ text: t.down, fill: INK, arrow: DOWN })
-  if (t.offline) out.push({ text: '離線', fill: '#d03b3b', sans: true })
-  if (t.count) out.push({ text: t.count, fill: '#64748b' })
+  if (t.name) out.push({ text: t.name, tone: 'fill-fg', sans: true })
+  if (t.up) out.push({ text: t.up, tone: 'fill-fg', arrow: UP })
+  if (t.down) out.push({ text: t.down, tone: 'fill-fg', arrow: DOWN })
+  if (t.offline) out.push({ text: tr('離線'), tone: 'fill-bad', sans: true })
+  if (t.count) out.push({ text: t.count, tone: 'fill-muted' })
   return out
 }
 
@@ -125,33 +125,32 @@ export function MapLabels({
         const cy = l.py < l.y ? l.y : l.py > l.y + H ? l.y + H : l.py
         return (
           <g key={l.key}>
-            {l.far && <line x1={l.px} y1={l.py} x2={cx} y2={cy} stroke="#94a3b8" strokeWidth="0.9" strokeDasharray="2 2" />}
+            {l.far && <line x1={l.px} y1={l.py} x2={cx} y2={cy} className="stroke-muted" strokeWidth="0.9" strokeDasharray="2 2" />}
             <rect
               x={l.x}
               y={l.y}
               width={l.w}
               height={H}
               rx={H / 2}
-              fill="#ffffff"
+              className={t.offline ? 'fill-raised stroke-bad/50' : 'fill-raised stroke-line'}
               fillOpacity="0.96"
-              stroke={t.offline ? '#fca5a5' : '#dbe3ef'}
               strokeWidth="0.9"
               filter="url(#pill-shadow)"
             />
             {flag ? (
               <image href={flag} x={l.x + 9} y={l.y + (H - 11) / 2} width={FLAG_W} height={11} preserveAspectRatio="xMidYMid slice" />
             ) : (
-              <rect x={l.x + 9} y={l.y + (H - 11) / 2} width={FLAG_W} height={11} rx="1.5" fill="#e2e8f0" />
+              <rect x={l.x + 9} y={l.y + (H - 11) / 2} width={FLAG_W} height={11} rx="1.5" className="fill-line" />
             )}
             <text x={l.x + 9 + FLAG_W + 6} y={l.y + H / 2 + 3.8} className="font-mono text-[11px] font-semibold">
               {segments(t).map((s, i) =>
                 s.arrow ? (
                   <tspan key={i} dx={i ? SEP : 0}>
                     <tspan fill={s.arrow}>{s.text.slice(0, 1)}</tspan>
-                    <tspan fill={s.fill}>{s.text.slice(1)}</tspan>
+                    <tspan className={s.tone}>{s.text.slice(1)}</tspan>
                   </tspan>
                 ) : (
-                  <tspan key={i} dx={i ? SEP : 0} fill={s.fill} className={s.sans ? 'font-sans' : ''}>
+                  <tspan key={i} dx={i ? SEP : 0} className={`${s.tone} ${s.sans ? 'font-sans' : ''}`}>
                     {s.text}
                   </tspan>
                 ),

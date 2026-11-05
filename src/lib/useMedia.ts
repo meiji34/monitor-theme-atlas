@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { t } from './i18n'
 import { MEDIA, mediaFor, type MediaData } from './media'
 
 // Live streaming-check results from the relay next to the hub (relay/), with
@@ -11,6 +12,7 @@ interface Live {
   nodes: Record<string, NodeMedia>
   pending: string[]
   known: string[]
+  agents?: string[] // nodes whose agent polled lately (older relays: absent)
   cooldown: number
 }
 
@@ -29,7 +31,7 @@ export const MediaContext = createContext<MediaCtx>({
   get: mediaFor,
   pending: () => false,
   canCheck: () => false,
-  check: async () => '無法連線到檢測服務',
+  check: async () => t('無法連線到檢測服務'),
 })
 export const useMedia = () => useContext(MediaContext)
 
@@ -71,7 +73,7 @@ export function useMediaProvider(authed: boolean): MediaCtx {
       available: MEDIA !== null || live !== null,
       get: (id) => live?.nodes[id] ?? mediaFor(id),
       pending: (id) => !!live?.pending.includes(String(id)),
-      canCheck: (id) => authed && !!live?.known.includes(String(id)),
+      canCheck: (id) => authed && !!(live?.agents ?? live?.known)?.includes(String(id)),
       check: async (id) => {
         try {
           const res = await fetch(`${BASE}/check/${id}`, { method: 'POST', headers: { 'X-Atlas': '1' } })
@@ -79,14 +81,15 @@ export function useMediaProvider(authed: boolean): MediaCtx {
             refresh()
             return null
           }
-          if (res.status === 401) return '請先登入後台'
+          if (res.status === 401) return t('請先登入後台')
+          if (res.status === 409) return t('這台節點沒有在執行檢測程式（未安裝或離線）')
           if (res.status === 429) {
             const retry = Number((await res.json().catch(() => ({})))?.retry ?? 0)
-            return `剛檢測過，請 ${Math.max(1, Math.ceil(retry / 60))} 分鐘後再試`
+            return t('剛檢測過，請 {n} 分鐘後再試', { n: Math.max(1, Math.ceil(retry / 60)) })
           }
-          return `檢測請求失敗（${res.status}）`
+          return t('檢測請求失敗（{status}）', { status: res.status })
         } catch {
-          return '無法連線到檢測服務'
+          return t('無法連線到檢測服務')
         }
       },
     }),

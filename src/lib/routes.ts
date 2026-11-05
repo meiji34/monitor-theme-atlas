@@ -45,7 +45,24 @@ export const PLAIN_SEA = '海路推估'
 const files = import.meta.env.VITE_ATLAS_BASE
   ? {}
   : import.meta.glob<RouteData>('../data/routes.json', { eager: true, import: 'default' })
-export const ROUTES: RouteData | null = Object.values(files)[0] ?? null
+const SNAPSHOT: RouteData | null = Object.values(files)[0] ?? null
+// The bundled snapshot, with any routes the relay traced since laid over it
+// (see useRoutes). A live binding: importers always see the current data.
+export let ROUTES: RouteData | null = SNAPSHOT
+export function setLiveRoutes(live: Pick<RouteData, 'routes' | 'asns'> | null) {
+  if (!live?.routes.length) {
+    ROUTES = SNAPSHOT
+    return
+  }
+  const byLink = new Map((SNAPSHOT?.routes ?? []).map((r) => [`${r.from}>${r.to}`, r]))
+  for (const r of live.routes) byLink.set(`${r.from}>${r.to}`, r)
+  const routes = [...byLink.values()]
+  ROUTES = {
+    generated: routes.map((r) => r.traced).sort().at(-1) ?? SNAPSHOT?.generated ?? '',
+    asns: { ...SNAPSHOT?.asns, ...live.asns },
+    routes,
+  }
+}
 
 export const asName = (asn: number) => (asn ? ROUTES?.asns[asn] || '' : '')
 

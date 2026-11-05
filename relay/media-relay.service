@@ -7,8 +7,9 @@ Wants=network-online.target
 Type=simple
 ExecStart=/usr/bin/python3 /opt/media-relay/media-relay.py
 Environment=PORT=28090 HUB=http://127.0.0.1:28080
-# Node tokens: read by systemd as root, handed to the service privately.
+# Node tokens and addresses: read by systemd as root, handed to the service privately.
 LoadCredential=tokens:/etc/media-relay/tokens.json
+LoadCredential=nodes:/etc/media-relay/nodes.json
 DynamicUser=yes
 StateDirectory=media-relay
 Restart=always
@@ -24,7 +25,7 @@ ProtectControlGroups=yes
 RestrictAddressFamilies=AF_INET AF_INET6
 RestrictSUIDSGID=yes
 LockPersonality=yes
-MemoryMax=64M
+MemoryMax=256M
 
 [Install]
 WantedBy=multi-user.target
