@@ -1,5 +1,7 @@
 # Atlas
 
+**English** · [繁體中文](README.zh-Hant.md) · [简体中文](README.zh-Hans.md)
+
 A theme for the [monitor](https://monitor-document.pages.dev/) server probe: a globe / flat world map with the nodes lit on it, a node topology drawn as arches, node cards, a table, latency charts and detail pages. Light, Traditional Chinese UI.
 
 The theme works on any hub as it is. Three extras are **optional** and need a little setup on your side, because they run on your servers rather than in the browser: [real routes](#real-routes-真實路由), a [submarine cable map](#submarine-cable-map-海纜底圖) and [streaming checks](#streaming-checks-流媒體檢測). Without them the theme simply doesn't show those parts.
@@ -21,7 +23,7 @@ In the hub: 主題 → install from a repository, using this repository's URL (t
   #1 -> #4 | 落地
   ```
   Links are blue and animated while every node on them is online, red and dashed otherwise. With no custom topology, the 中心節點 (or the first node) is linked to every other node.
-- Map mode, auto-rotation, lit countries, map labels, summary tiles, which latency probes the cards show, offline ordering, a notice line, and the switches for the optional extras.
+- Map mode, auto-rotation, lit countries, map labels, grey-out of cables no route rides, summary tiles, which latency probes the cards show, offline ordering, a notice line, and the switches for the optional extras.
 
 The map zooms with Ctrl/⌘ + wheel or the +/− buttons, so plain scrolling still scrolls the page.
 

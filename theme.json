@@ -2,7 +2,7 @@
   "name": "Atlas",
   "short": "atlas",
   "description": "海圖風格的地球／平面地圖、節點拓撲、真實路由與流媒體檢測，支援深色與三種語言",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "author": "yddsfj",
   "url": "https://github.com/meiji34/monitor-theme-atlas",
   "config": [
@@ -72,6 +72,13 @@
       "label": "預設以真實路由畫連線",
       "default": false,
       "help": "連線改沿實際的 AS 路徑走（mtr 追蹤結果，打包時內建的快照），跨海段沿推測的海底光纜畫，並顯示 TeleGeography 海纜底圖（2022 版，CC BY-NC-SA 3.0，限非商業使用）。訪客也可以用地圖右上角的「路由」按鈕切換；沒有路由資料的連線維持直線"
+    },
+    {
+      "key": "cable_grey",
+      "type": "boolean",
+      "label": "其他海纜顯示為灰色",
+      "default": true,
+      "help": "海纜底圖裡，沒有節點路由經過的海纜一律畫成灰色，只有路由用到的保留原色，比較容易和節點路由區分。訪客可在設定選單自行切換"
     },
     { "type": "title", "label": "卡片" },
     { "key": "show_summary", "type": "boolean", "label": "顯示總覽", "default": true },

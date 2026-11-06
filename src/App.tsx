@@ -9,6 +9,7 @@ import { TopNav } from './components/TopNav'
 import { fetchMe } from './lib/api'
 import { browserLang, setLang, t, type Lang } from './lib/i18n'
 import { DarkContext, SCHEMES } from './lib/scheme'
+import { hasCables } from './lib/cables'
 import { MediaContext, useMediaProvider } from './lib/useMedia'
 import { RoutesContext, useRoutesProvider } from './lib/useRoutes'
 import { useThemeConfig } from './lib/config'
@@ -76,6 +77,7 @@ export default function App() {
   const [spin, setSpin, resetSpin] = usePref('atlas:rotate', cfg.globe_autorotate ? 'on' : 'off', ON_OFF)
   const [labels, setLabels, resetLabels] = usePref('atlas:labels', cfg.map_labels, LABELS)
   const [lit, setLit, resetLit] = usePref('atlas:lit', cfg.light_countries ? 'on' : 'off', ON_OFF)
+  const [cableGrey, setCableGrey, resetCableGrey] = usePref('atlas:cable-grey', cfg.cable_grey === false ? 'off' : 'on', ON_OFF)
   const [routesPref, setRoutes, resetRoutes] = usePref('atlas:routes', cfg.topology_routes ? 'on' : 'off', ON_OFF)
   const [selected, setSelected] = useState<number | null>(null)
   const [lang, setLangPref, resetLang] = usePref<Lang>(
@@ -234,12 +236,14 @@ export default function App() {
     setLabels,
     lit: lit === 'on',
     setLit: (v) => setLit(v ? 'on' : 'off'),
+    cableGrey: hasRoutes && hasCables ? cableGrey === 'on' : null,
+    setCableGrey: (v) => setCableGrey(v ? 'on' : 'off'),
     lang,
     setLang: setLangPref,
     scheme,
     setScheme,
     reset: () =>
-      [resetMapMode, resetTopo, resetSpin, resetLabels, resetLit, resetRoutes, resetLang, resetScheme].forEach((r) => r()),
+      [resetMapMode, resetTopo, resetSpin, resetLabels, resetLit, resetRoutes, resetLang, resetScheme, resetCableGrey].forEach((r) => r()),
   }
 
   let body: React.ReactNode
@@ -300,6 +304,7 @@ export default function App() {
             focus={focus}
             labels={labels}
             lightCountries={lit === 'on'}
+            greyCables={cableGrey === 'on'}
             nodes={sorted}
             topology={
               links.length

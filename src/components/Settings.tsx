@@ -16,6 +16,8 @@ export interface VisitorSettings {
   setLabels: (v: LabelMode) => void
   lit: boolean
   setLit: (v: boolean) => void
+  cableGrey: boolean | null // null: no cable map
+  setCableGrey: (v: boolean) => void
   lang: Lang
   setLang: (v: Lang) => void
   scheme: Scheme
@@ -139,6 +141,11 @@ export function SettingsMenu({ s }: { s: VisitorSettings }) {
             {s.routes !== null && (
               <Item label={t('真實路由')} hint={s.topology ? t('連線沿實際的 AS 路徑走') : t('需先開啟拓撲連線')}>
                 <Switch on={s.routes} onChange={s.setRoutes} disabled={!s.topology} />
+              </Item>
+            )}
+            {s.cableGrey !== null && (
+              <Item label={t('其他海纜顯示為灰色')} hint={t('只有節點路由經過的海纜保留顏色')}>
+                <Switch on={s.cableGrey} onChange={s.setCableGrey} />
               </Item>
             )}
             <Item label={t('點亮有節點的國家')}>

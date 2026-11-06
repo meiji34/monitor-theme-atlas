@@ -7,6 +7,7 @@ export interface ThemeConfig {
   map_mode: 'globe' | 'flat'
   globe_autorotate: boolean
   light_countries: boolean
+  cable_grey: boolean
   map_labels: 'speed' | 'name' | 'name_speed' | 'off'
   locations: string
   show_topology: boolean

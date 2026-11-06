@@ -59,14 +59,14 @@ export function Wordmark({ className = '' }: { className?: string }) {
         <ellipse cx="14" cy="14" rx="5.2" ry="11.6" fill="none" className="stroke-accent" strokeWidth="1.9" />
         <circle cx="19.2" cy="14" r="1.9" className="fill-accent" />
       </svg>
-      <span className="font-display text-[27px] leading-none font-semibold tracking-[0.05em]">Atlas</span>
+      <span className="font-display text-[24px] leading-none font-semibold tracking-[0.05em] sm:text-[27px]">Atlas</span>
     </span>
   )
 }
 
 function LangPicker({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
   return (
-    <label className="relative flex items-center rounded-lg border border-line bg-card text-muted hover:border-primary/40 hover:text-fg">
+    <label className="relative hidden items-center rounded-lg sm:flex border border-line bg-card text-muted hover:border-primary/40 hover:text-fg">
       <span className="sr-only">{t('語言')}</span>
       <svg viewBox="0 0 16 16" className="pointer-events-none absolute left-2 size-3.5" fill="none" stroke="currentColor" strokeWidth="1.3">
         <circle cx="8" cy="8" r="6" />
@@ -107,13 +107,13 @@ export function TopNav({
   return (
     // Full width like the status bar at the bottom; the contents line up with the page.
     <header className="sticky top-0 z-40 border-b border-line bg-card/85 backdrop-blur">
-      <div className="page-w mx-auto flex h-16 items-center gap-3 px-4 sm:gap-4 sm:px-6">
+      <div className="page-w mx-auto flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:h-16 sm:flex-nowrap sm:gap-4 sm:px-6 sm:py-0">
         <Link to="/" className="flex items-center gap-3" title={siteName || 'Atlas'}>
           <Wordmark />
           {siteName && <span className="hidden max-w-40 truncate text-[14px] text-muted lg:inline">{siteName}</span>}
         </Link>
         <LangPicker lang={settings.lang} onChange={settings.setLang} />
-        <nav className="flex items-center gap-0.5 rounded-lg border border-line bg-card p-0.5">
+        <nav className="order-last flex w-full items-center gap-0.5 rounded-lg border border-line bg-card p-0.5 sm:order-none sm:w-auto">
           {ITEMS.map((it) => {
             const on = active === it.route.view
             return (
@@ -121,12 +121,12 @@ export function TopNav({
                 key={it.route.view}
                 to={href(it.route)}
                 aria-current={on ? 'page' : undefined}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] ${
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] sm:flex-none ${
                   on ? 'bg-primary-soft font-medium text-primary' : 'text-muted hover:text-fg'
                 }`}
               >
                 {it.icon}
-                <span className="hidden md:inline">{t(it.label)}</span>
+                <span className="max-sm:text-[13px] sm:hidden md:inline">{t(it.label)}</span>
               </Link>
             )
           })}

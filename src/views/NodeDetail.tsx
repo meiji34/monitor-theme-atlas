@@ -22,8 +22,8 @@ function Ring({ label, value, sub }: { label: string; value: number; sub: string
   const c = 2 * Math.PI * r
   const tone = value >= 90 ? 'stroke-bad' : value >= 70 ? 'stroke-warn' : 'stroke-primary'
   return (
-    <div className="panel flex items-center gap-4 p-4">
-      <svg viewBox="0 0 80 80" className="size-20 shrink-0 -rotate-90">
+    <div className="panel flex flex-col items-start gap-2 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
+      <svg viewBox="0 0 80 80" className="size-14 shrink-0 -rotate-90 sm:size-20">
         <circle cx="40" cy="40" r={r} fill="none" className="stroke-primary-soft" strokeWidth="7" />
         <circle
           cx="40"
@@ -36,9 +36,9 @@ function Ring({ label, value, sub }: { label: string; value: number; sub: string
           strokeDasharray={`${(value / 100) * c} ${c}`}
         />
       </svg>
-      <div className="min-w-0">
+      <div className="w-full min-w-0">
         <div className="hud">{label}</div>
-        <div className="font-display text-[30px] leading-tight font-semibold">{value.toFixed(1)}%</div>
+        <div className="font-display text-[24px] leading-tight font-semibold sm:text-[30px]">{value.toFixed(1)}%</div>
         <div className="truncate font-mono text-[13px] text-muted">{sub}</div>
       </div>
     </div>
@@ -163,7 +163,7 @@ export function NodeDetail({
       </div>
       {node.public_remark && <p className="-mt-2 text-[14px] text-muted">{node.public_remark}</p>}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Ring
           label="CPU"
           value={m?.cpu ?? 0}

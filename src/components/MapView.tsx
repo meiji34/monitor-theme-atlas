@@ -60,6 +60,7 @@ const DAY = {
   dotRing: '#41586b',
   city: '#587083',
   cableOpacity: 0.42,
+  cableGrey: '#9eabb6',
 }
 const NIGHT: typeof DAY = {
   sea: '#0b1926',
@@ -80,6 +81,7 @@ const NIGHT: typeof DAY = {
   dotRing: '#9db1c2',
   city: '#7f95a7',
   cableOpacity: 0.5,
+  cableGrey: '#3d5466',
 }
 
 type Mode = 'globe' | 'flat'
@@ -96,6 +98,8 @@ interface Props {
   fill?: boolean
   labels: LabelMode
   lightCountries: boolean
+  // Cables no traced route rides drawn grey, so the routes stand out.
+  greyCables?: boolean
   nodes: Node[]
   // null when no topology is configured, so the toggle stays hidden.
   topology: { on: boolean; toggle: () => void } | null
@@ -175,6 +179,7 @@ export function MapView({
   focus,
   labels,
   lightCountries,
+  greyCables,
   nodes,
   topology,
   routes,
@@ -454,12 +459,12 @@ export function MapView({
   return (
     <section ref={boxRef} className="panel relative h-full overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-3">
-        <div className="flex flex-wrap gap-x-3 font-mono text-[13px] text-muted">
+        <div className="hidden flex-wrap gap-x-3 font-mono text-[13px] text-muted xl:flex">
           <span>{t('{n} 個地點', { n: points.length })}</span>
           <span>{t('{n} 個國家', { n: lit.shapes.length + lit.spots.length })}</span>
           <span>{t('{n} 條鏈路', { n: allLinks.length })}</span>
         </div>
-        <div className="pointer-events-auto flex flex-wrap justify-end gap-1 rounded-lg border border-line bg-card/85 p-0.5 text-[13px] backdrop-blur">
+        <div className="pointer-events-auto ml-auto flex flex-wrap justify-end gap-0.5 rounded-lg border border-line bg-card/85 p-0.5 text-[13px] backdrop-blur sm:gap-1">
           {(['globe', 'flat'] as const).map((m) => (
             <button
               key={m}
@@ -492,7 +497,7 @@ export function MapView({
                     <path d="M5 3.2v9.6L12.5 8 5 3.2Z" />
                   </svg>
                 )}
-                {rotation.on ? t('暫停轉動') : t('開始轉動')}
+                <span className="hidden xl:inline">{rotation.on ? t('暫停轉動') : t('開始轉動')}</span>
               </button>
             </>
           )}
@@ -512,7 +517,7 @@ export function MapView({
                   <circle cx="12.5" cy="12" r="1.8" />
                   <path d="M5 10.4 11 5.6M5.3 11.6h5.4" />
                 </svg>
-                {t('拓撲')}
+                <span className="hidden xl:inline">{t('拓撲')}</span>
               </button>
               {routes && topology.on && (
                 <button
@@ -527,7 +532,7 @@ export function MapView({
                     <circle cx="2.5" cy="12.5" r="1.2" fill="currentColor" />
                     <circle cx="13.5" cy="7.5" r="1.2" fill="currentColor" />
                   </svg>
-                  {t('路由')}
+                  <span className="hidden xl:inline">{t('路由')}</span>
                 </button>
               )}
             </>
@@ -632,7 +637,7 @@ export function MapView({
                 <path
                   d={d}
                   fill="none"
-                  stroke={c.color}
+                  stroke={greyCables && !used && !lit ? C.cableGrey : c.color}
                   strokeOpacity={lit ? 1 : used ? 0.9 : C.cableOpacity}
                   strokeWidth={lit ? 2.4 : used ? 1.5 : 0.9}
                   strokeLinejoin="round"
