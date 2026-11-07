@@ -2,6 +2,8 @@
 
 [English](README.md) · [繁體中文](README.zh-Hant.md) · **简体中文**
 
+**演示站：[status.yddsfj.uk](https://status.yddsfj.uk)**（站上的横幅图片是站长自己的，不随主题提供）
+
 ![Atlas：地球、节点拓扑，深色外观](preview.png)
 
 [monitor 极简探针](https://monitor-document.pages.dev/) 的主题：海图风格的地球／平面地图，点亮有节点的国家，节点之间以拱形弧线画出拓扑；另有节点卡片、表格、延迟与详情页。支持浅色／深色，界面有繁體中文、简体中文与 English。
