@@ -2,6 +2,8 @@
 
 [English](README.md) · [繁體中文](README.zh-Hant.md) · **简体中文**
 
+![Atlas：地球、节点拓扑，深色外观](preview.png)
+
 [monitor 极简探针](https://monitor-document.pages.dev/) 的主题：海图风格的地球／平面地图，点亮有节点的国家，节点之间以拱形弧线画出拓扑；另有节点卡片、表格、延迟与详情页。支持浅色／深色，界面有繁體中文、简体中文与 English。
 
 主题本身装上就能用。另外三项是**可选功能**，因为它们要在你的服务器上运行，需要自己配置：[真实路由](#真实路由)、[海缆底图](#海缆底图)、[流媒体检测](#流媒体检测)。没配置的话，主题就不显示那些部分。
@@ -9,6 +11,12 @@
 ## 安装
 
 在后台「主题」页用本仓库地址安装（hub 会抓取最新 Release 里的 `theme.tar.gz`），或从 Releases 下载 `theme.tar.gz` 上传。
+
+### Komari
+
+同一个主题也能装在 [Komari](https://github.com/komari-monitor/komari)（1.6 以上）：从 Releases 下载 `atlas-komari.zip`，在 Komari 后台的主题设置上传即可，设置项会出现在 Komari 的主题设置页。数据来自 Komari 的公开 API；延迟显示 Komari 的 Ping 任务，流量栏显示 Komari 的流量计数。拓扑与位置设置请用节点名称（或 `#uuid`）。
+
+自己的路由、流媒体快照是以 monitor 的节点 ID 记录的：执行 `node scripts/komari-ids.mjs` 按名称对应两边的节点、写出 `src/data/ids.json`，再 `npm run pack:komari` 打包。`npm run dev:komari` 会转发到 `.env.local` 的 `KOMARI_HUB`。实时 relay（`relay/`）是为 monitor 写的，在 Komari 上主题会改用打包内置的快照。
 
 ## 设置（后台 → 主题 → Atlas → 设置）
 

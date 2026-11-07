@@ -6,7 +6,7 @@ import { Link } from '../lib/router'
 import type { Node, PingSeries } from '../lib/types'
 
 // Every node against every latency probe for the last hour.
-export function LatencyView({ nodes, ping }: { nodes: Node[]; ping: Record<number, PingSeries> }) {
+export function LatencyView({ nodes, ping }: { nodes: Node[]; ping: Record<string, PingSeries> }) {
   const probes = [...new Set(nodes.flatMap((n) => Object.values(ping[n.id]?.probes ?? {})))]
   if (!probes.length) {
     return <div className="panel p-10 text-center text-[15px] text-muted">{t('還沒有延遲資料。到後台「延遲」頁新增監控後，一分鐘內就會出現。')}</div>

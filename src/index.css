@@ -156,6 +156,11 @@ body {
 .page-w {
   max-width: 1400px;
 }
+@media (min-width: 1500px) {
+  .page-w {
+    max-width: 1560px;
+  }
+}
 @media (min-width: 1700px) {
   .page-w {
     max-width: 1640px;

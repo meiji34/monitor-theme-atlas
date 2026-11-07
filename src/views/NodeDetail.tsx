@@ -77,7 +77,7 @@ export function NodeDetail({
   historyDays,
   showMedia,
 }: {
-  id: number
+  id: string
   nodes: Node[]
   historyDays: number
   showMedia: boolean

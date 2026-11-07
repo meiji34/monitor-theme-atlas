@@ -68,7 +68,7 @@ function Spinner() {
 }
 
 // The ask-for-a-check button with its pending state and any error.
-function CheckButton({ nodeId, label, small }: { nodeId: number; label: string; small?: boolean }) {
+function CheckButton({ nodeId, label, small }: { nodeId: string; label: string; small?: boolean }) {
   const media = useMedia()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -106,7 +106,7 @@ function CheckButton({ nodeId, label, small }: { nodeId: number; label: string; 
 }
 
 // Section header extras: when it was checked, and a re-check for admins.
-export function MediaActions({ nodeId }: { nodeId: number }) {
+export function MediaActions({ nodeId }: { nodeId: string }) {
   const media = useMedia()
   const data = media.get(nodeId)
   return (
@@ -118,7 +118,7 @@ export function MediaActions({ nodeId }: { nodeId: number }) {
 }
 
 // Grouped verdict chips; `wide` lays the groups out side by side.
-export function MediaChecks({ nodeId, home, wide }: { nodeId: number; home?: string | null; wide?: boolean }) {
+export function MediaChecks({ nodeId, home, wide }: { nodeId: string; home?: string | null; wide?: boolean }) {
   const media = useMedia()
   const data = media.get(nodeId)
   if (!data) {
@@ -150,7 +150,7 @@ export function MediaChecks({ nodeId, home, wide }: { nodeId: number; home?: str
 
 // One line on a node card: a tally with the full list on hover, or the
 // button when there's nothing yet.
-export function MediaCardLine({ nodeId }: { nodeId: number }) {
+export function MediaCardLine({ nodeId }: { nodeId: string }) {
   const media = useMedia()
   const data = media.get(nodeId)
   if (!data) {

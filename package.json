@@ -9,7 +9,10 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "pack": "npm run build && node scripts/pack.mjs",
-    "pack:base": "tsc -b && vite build --mode base && node scripts/pack.mjs"
+    "pack:base": "tsc -b && vite build --mode base && node scripts/pack.mjs",
+    "pack:komari": "tsc -b && vite build --mode komari && node scripts/pack.mjs --komari",
+    "pack:komari-base": "tsc -b && vite build --mode komari-base && node scripts/pack.mjs --komari",
+    "dev:komari": "vite --mode komari"
   },
   "dependencies": {
     "@fontsource/barlow": "^5.3.0",

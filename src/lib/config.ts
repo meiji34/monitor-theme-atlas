@@ -30,7 +30,7 @@ type Item = {
   default?: unknown
   min?: number
   max?: number
-  options?: { value: string }[]
+  options?: { value: string; label?: string }[]
 }
 
 const items = (manifest.config as Item[]).filter((i) => i.key && i.type !== 'title')
@@ -73,7 +73,9 @@ export function useThemeConfig(): ThemeConfig {
       const saved = { ...fromHub, ...devOverrides }
       const merged: Record<string, unknown> = { ...defaults }
       for (const item of items) {
-        const v = saved[item.key!]
+        let v = saved[item.key!]
+        // Komari's select options are plain strings, so the package lists the labels.
+        if (item.type === 'select' && typeof v === 'string') v = item.options?.find((o) => o.label === v)?.value ?? v
         if (v !== undefined && valid(item, v)) merged[item.key!] = v
       }
       setCfg(merged as unknown as ThemeConfig)

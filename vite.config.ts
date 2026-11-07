@@ -5,9 +5,12 @@ import { defineConfig, loadEnv } from 'vite'
 // The theme is served same-origin by the hub, so in dev every /api call
 // (including the WebSocket) is proxied to a live hub: MONITOR_HUB, from the
 // environment or a git-ignored .env.local (MONITOR_HUB=https://status.example.com).
+// For the Komari build (`--mode komari`) the hub is KOMARI_HUB instead.
 export default defineConfig(({ command, mode }) => {
-  const hub = process.env.MONITOR_HUB || loadEnv(mode, process.cwd(), '').MONITOR_HUB || ''
-  if (command === 'serve' && !hub) console.warn('MONITOR_HUB is not set: /api requests will fail (see README → Development)')
+  const env = loadEnv(mode, process.cwd(), '')
+  const key = env.VITE_ATLAS_HUB === 'komari' ? 'KOMARI_HUB' : 'MONITOR_HUB'
+  const hub = process.env[key] || env[key] || ''
+  if (command === 'serve' && !hub) console.warn(`${key} is not set: /api requests will fail (see README → Development)`)
   return {
     plugins: [react(), tailwindcss()],
     server: {

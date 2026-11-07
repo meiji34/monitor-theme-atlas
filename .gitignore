@@ -43,3 +43,6 @@ scripts/data/*.json
 # Dev tooling installed with `npx skills add` (agent skills), not part of the theme
 .claude/
 skills-lock.json
+
+# packaged release for Komari
+atlas-komari.zip

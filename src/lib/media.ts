@@ -1,3 +1,5 @@
+import { dataId } from './ids'
+
 // Streaming / AI service availability per node, written by scripts/media.mjs
 // (probes run on each node over SSH; a snapshot bundled into the theme).
 
@@ -19,8 +21,8 @@ const files = import.meta.env.VITE_ATLAS_BASE
   : import.meta.glob<MediaData>('../data/media.json', { eager: true, import: 'default' })
 export const MEDIA: MediaData | null = Object.values(files)[0] ?? null
 
-export const mediaFor = (id: number) => MEDIA?.nodes[id] ?? null
-export const mediaCheckedOn = (id: number) => {
+export const mediaFor = (id: string) => MEDIA?.nodes[dataId(id)] ?? null
+export const mediaCheckedOn = (id: string) => {
   const d = mediaFor(id)
   return d ? new Date(d.checked).toLocaleDateString() : null
 }

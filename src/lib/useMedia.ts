@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { t } from './i18n'
+import { dataId } from './ids'
 import { MEDIA, mediaFor, type MediaData } from './media'
 
 // Live streaming-check results from the relay next to the hub (relay/), with
@@ -19,11 +20,11 @@ interface Live {
 export interface MediaCtx {
   // Any results to show at all: a bundled snapshot, or a relay answering.
   available: boolean
-  get: (id: number) => NodeMedia | null
-  pending: (id: number) => boolean
-  canCheck: (id: number) => boolean
+  get: (id: string) => NodeMedia | null
+  pending: (id: string) => boolean
+  canCheck: (id: string) => boolean
   // Resolves to an error message, or null once the request is queued.
-  check: (id: number) => Promise<string | null>
+  check: (id: string) => Promise<string | null>
 }
 
 export const MediaContext = createContext<MediaCtx>({
@@ -71,12 +72,12 @@ export function useMediaProvider(authed: boolean): MediaCtx {
   return useMemo<MediaCtx>(
     () => ({
       available: MEDIA !== null || live !== null,
-      get: (id) => live?.nodes[id] ?? mediaFor(id),
-      pending: (id) => !!live?.pending.includes(String(id)),
-      canCheck: (id) => authed && !!(live?.agents ?? live?.known)?.includes(String(id)),
+      get: (id) => live?.nodes[dataId(id)] ?? mediaFor(id),
+      pending: (id) => !!live?.pending.includes(dataId(id)),
+      canCheck: (id) => authed && !!(live?.agents ?? live?.known)?.includes(dataId(id)),
       check: async (id) => {
         try {
-          const res = await fetch(`${BASE}/check/${id}`, { method: 'POST', headers: { 'X-Atlas': '1' } })
+          const res = await fetch(`${BASE}/check/${dataId(id)}`, { method: 'POST', headers: { 'X-Atlas': '1' } })
           if (res.status === 202) {
             refresh()
             return null

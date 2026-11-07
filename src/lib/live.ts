@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { fetchNodes, fetchPing } from './api'
+import { fetchNodes, fetchPing, KOMARI, withStringIds } from './api'
+import { fetchKNodes, fetchKStatus, mergeLive, type KNode, type KStatus } from './komari'
 import type { Node, PingSeries } from './types'
 
 const POLL_MS = 5000
@@ -18,7 +19,7 @@ async function decodeFrame(data: unknown): Promise<Node[] | null> {
     return null
   }
   const parsed = JSON.parse(text) as { nodes?: unknown }
-  return Array.isArray(parsed.nodes) ? (parsed.nodes as Node[]) : null
+  return Array.isArray(parsed.nodes) ? withStringIds(parsed.nodes as Node[]) : null
 }
 
 export type LiveState = { nodes: Node[]; loaded: boolean; error: string | null; mode: 'ws' | 'poll' | 'idle' }
@@ -27,6 +28,60 @@ export type LiveState = { nodes: Node[]; loaded: boolean; error: string | null; 
 // (the hub turns anonymous sockets away with 503 past its cap). Everything
 // stops while the tab is hidden and resumes with a fresh fetch.
 export function useLiveNodes(): LiveState {
+  return KOMARI ? useKomariNodes() : useMonitorNodes()
+}
+
+// Komari: node info once a minute, live status every few seconds, both paused
+// while the tab is hidden.
+const K_STATUS_MS = 3000
+const K_NODES_MS = 60000
+function useKomariNodes(): LiveState {
+  const [state, setState] = useState<LiveState>({ nodes: [], loaded: false, error: null, mode: 'idle' })
+  useEffect(() => {
+    let statics: KNode[] | null = null
+    let status: Record<string, KStatus> | null = null
+    let lastNodes = 0
+    let timer: number | undefined
+    let stopped = false
+    let abort: AbortController | null = null
+    const tick = async () => {
+      if (stopped) return
+      abort = new AbortController()
+      try {
+        const now = Date.now()
+        const [s, n] = await Promise.all([
+          fetchKStatus(abort.signal),
+          !statics || now - lastNodes > K_NODES_MS ? fetchKNodes(abort.signal) : Promise.resolve(statics),
+        ])
+        if (n !== statics) lastNodes = now
+        statics = n
+        status = s
+        // Polling is how Komari is meant to be read, so it counts as connected.
+        if (!stopped) setState({ nodes: mergeLive(statics, status), loaded: true, error: null, mode: 'ws' })
+      } catch (e) {
+        if (!stopped && !(e instanceof DOMException))
+          setState((st) => ({ ...st, loaded: true, error: (e as Error).message }))
+      }
+      if (!stopped && !document.hidden) timer = window.setTimeout(tick, K_STATUS_MS)
+    }
+    const onVisibility = () => {
+      clearTimeout(timer)
+      abort?.abort()
+      if (!document.hidden) tick()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    tick()
+    return () => {
+      stopped = true
+      clearTimeout(timer)
+      abort?.abort()
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [])
+  return state
+}
+
+function useMonitorNodes(): LiveState {
   const [state, setState] = useState<LiveState>({ nodes: [], loaded: false, error: null, mode: 'idle' })
   const gen = useRef(0)
 
@@ -126,12 +181,12 @@ export function useLiveNodes(): LiveState {
 
 // Recent ping rows per node, refreshed every minute and staggered so a page
 // with many nodes doesn't trip the hub's history rate limit.
-export function usePingSeries(ids: number[]): Record<number, PingSeries> {
-  const [data, setData] = useState<Record<number, PingSeries>>({})
+export function usePingSeries(ids: string[]): Record<string, PingSeries> {
+  const [data, setData] = useState<Record<string, PingSeries>>({})
   const key = ids.join(',')
 
   useEffect(() => {
-    const list = key ? key.split(',').map(Number) : []
+    const list = key ? key.split(",") : []
     let cancelled = false
     const timers: number[] = []
     const load = () => {

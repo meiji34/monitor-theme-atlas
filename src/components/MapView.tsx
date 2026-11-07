@@ -203,6 +203,25 @@ export function MapView({
   }, [links, showRoutes, points, routes?.version]) // eslint-disable-line react-hooks/exhaustive-deps
   const colourOf = (asn: number) => routes?.colours.get(asn) ?? OTHER_AS
   const [focusAs, setFocusAs] = useState<number | null>(null)
+  // The AS legend folds into a small chip; on phones it starts folded so the globe stays visible.
+  const [legendOpen, setLegendOpen] = useState(() => {
+    try {
+      const v = localStorage.getItem('atlas:legend')
+      if (v !== null) return v === '1'
+    } catch {
+      /* storage blocked */
+    }
+    return window.matchMedia('(min-width: 640px)').matches
+  })
+  const toggleLegend = () =>
+    setLegendOpen((o) => {
+      try {
+        localStorage.setItem('atlas:legend', o ? '0' : '1')
+      } catch {
+        /* storage blocked */
+      }
+      return !o
+    })
   const [hoverLeg, setHoverLeg] = useState<{ leg: Leg; link: Link; rtt: number | null; x: number; y: number } | null>(null)
   // The submarine cable base map, fetched the first time routes are shown.
   const [cables, setCables] = useState<CableData | null>(null)
@@ -817,16 +836,48 @@ export function MapView({
         />
       </svg>
 
-      {showRoutes && legend.coloured.length + legend.others.length > 0 && (
-        <div className="absolute bottom-3 left-3 z-10 w-64 rounded-lg border border-line bg-card/90 p-2 text-[13px] backdrop-blur">
-          <div className="mb-1 flex items-baseline justify-between gap-2 px-1">
+      {showRoutes && legend.coloured.length + legend.others.length > 0 && !legendOpen && (
+        <button
+          onClick={toggleLegend}
+          aria-expanded={false}
+          title={t('展開圖例')}
+          className="absolute bottom-9 left-3 z-10 flex h-9 sm:bottom-3 items-center gap-2 rounded-lg border border-line bg-card/90 px-3 text-[13px] backdrop-blur hover:border-primary/40 hover:text-primary"
+        >
+          <span className="flex h-[3px] w-4 shrink-0 overflow-hidden rounded-full">
+            {legend.coloured.slice(0, 3).map((asn) => (
+              <span key={asn} className="flex-1" style={{ background: colourOf(asn) }} />
+            ))}
+          </span>
+          <span className="hud">{t('AS 路由')}</span>
+          <span className="font-mono text-[12px] text-muted">{legend.coloured.length + legend.others.length}</span>
+          <svg viewBox="0 0 12 12" className="size-3 text-muted" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <path d="M3 7.5 6 4.5l3 3" />
+          </svg>
+        </button>
+      )}
+      {showRoutes && legend.coloured.length + legend.others.length > 0 && legendOpen && (
+        <div className="absolute bottom-9 left-3 z-10 flex max-h-[calc(100%-6.5rem)] sm:bottom-3 sm:max-h-[calc(100%-4.5rem)] w-64 max-w-[calc(100%-1.5rem)] flex-col rounded-lg border border-line bg-card/90 p-2 text-[13px] backdrop-blur">
+          <div className="mb-1 flex items-center justify-between gap-2 pl-1">
             <span className="hud">{t('AS 路由')}</span>
-            {ROUTES && (
-              <span className="font-mono text-[12px] text-muted" title={t('路由快照時間（mtr 單向追蹤）')}>
-                {new Date(ROUTES.generated).toLocaleDateString(locale())}
-              </span>
-            )}
+            <span className="flex items-center gap-1">
+              {ROUTES && (
+                <span className="font-mono text-[12px] text-muted" title={t('路由快照時間（mtr 單向追蹤）')}>
+                  {new Date(ROUTES.generated).toLocaleDateString(locale())}
+                </span>
+              )}
+              <button
+                onClick={toggleLegend}
+                aria-expanded={true}
+                title={t('收起圖例')}
+                className="flex size-7 items-center justify-center rounded text-muted hover:bg-primary-soft/60 hover:text-primary"
+              >
+                <svg viewBox="0 0 12 12" className="size-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                  <path d="M3 4.5 6 7.5l3-3" />
+                </svg>
+              </button>
+            </span>
           </div>
+          <div className="min-h-0 overflow-y-auto">
           {legend.coloured.map((asn) => (
             <button
               key={asn}
@@ -861,6 +912,7 @@ export function MapView({
               {t('海纜示意路線，走哪條為推測')}
             </div>
           )}
+          </div>
         </div>
       )}
 

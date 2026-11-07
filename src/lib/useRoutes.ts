@@ -1,3 +1,4 @@
+import { dataId } from './ids'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { t } from './i18n'
 import { setLiveRoutes, type Route } from './routes'
@@ -20,9 +21,9 @@ interface Live {
 
 export interface RoutesCtx {
   version: number // bumps when the route data changes
-  pending: (id: number) => boolean
-  canTrace: (id: number) => boolean
-  trace: (id: number) => Promise<string | null> // error message, or null once queued
+  pending: (id: string) => boolean
+  canTrace: (id: string) => boolean
+  trace: (id: string) => Promise<string | null> // error message, or null once queued
 }
 
 export const RoutesContext = createContext<RoutesCtx>({
@@ -76,11 +77,11 @@ export function useRoutesProvider(authed: boolean): RoutesCtx {
   return useMemo<RoutesCtx>(
     () => ({
       version,
-      pending: (id) => !!live?.pending.includes(String(id)),
-      canTrace: (id) => authed && !!live?.sourceAlive && !!live.traceable.includes(String(id)),
+      pending: (id) => !!live?.pending.includes(dataId(id)),
+      canTrace: (id) => authed && !!live?.sourceAlive && !!live.traceable.includes(dataId(id)),
       trace: async (id) => {
         try {
-          const res = await fetch(`${BASE}/trace/${id}`, { method: 'POST', headers: { 'X-Atlas': '1' } })
+          const res = await fetch(`${BASE}/trace/${dataId(id)}`, { method: 'POST', headers: { 'X-Atlas': '1' } })
           if (res.status === 202) {
             refresh()
             return null

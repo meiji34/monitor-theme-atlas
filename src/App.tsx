@@ -79,7 +79,7 @@ export default function App() {
   const [lit, setLit, resetLit] = usePref('atlas:lit', cfg.light_countries ? 'on' : 'off', ON_OFF)
   const [cableGrey, setCableGrey, resetCableGrey] = usePref('atlas:cable-grey', cfg.cable_grey === false ? 'off' : 'on', ON_OFF)
   const [routesPref, setRoutes, resetRoutes] = usePref('atlas:routes', cfg.topology_routes ? 'on' : 'off', ON_OFF)
-  const [selected, setSelected] = useState<number | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
   const [lang, setLangPref, resetLang] = usePref<Lang>(
     'atlas:lang',
     cfg.default_lang === 'auto' ? browserLang() : cfg.default_lang,
@@ -108,7 +108,7 @@ export default function App() {
   }, [me.site_name])
 
   const sorted = useMemo(() => {
-    const list = [...nodes].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0) || a.id - b.id)
+    const list = [...nodes].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0) || a.id.localeCompare(b.id, undefined, { numeric: true }))
     return cfg.offline_last ? list.sort((a, b) => Number(b.online) - Number(a.online)) : list
   }, [nodes, cfg.offline_last])
 
@@ -130,7 +130,7 @@ export default function App() {
 
   const overrides = useMemo(() => parseLocations(cfg.locations), [cfg.locations])
   const places = useMemo(() => {
-    const m = new Map<number, Place>()
+    const m = new Map<string, Place>()
     for (const n of sorted) {
       const p = locate(n, overrides)
       if (p) m.set(n.id, p)

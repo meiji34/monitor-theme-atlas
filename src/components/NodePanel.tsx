@@ -54,7 +54,7 @@ type Colours = Map<number, string>
 const runColour = (asn: number, colours: Colours) => (asn ? (colours.get(asn) ?? OTHER_AS) : OTHER_AS)
 
 // One traced route as an AS-by-AS timeline with the places each network passes.
-function RouteTimeline({ route, colours, placeLabel }: { route: Route; colours: Colours; placeLabel: (id: number) => string }) {
+function RouteTimeline({ route, colours, placeLabel }: { route: Route; colours: Colours; placeLabel: (id: string) => string }) {
   const runs = asPath(route, { from: placeLabel(route.from), to: placeLabel(route.to) })
   return (
     <ol>
@@ -97,7 +97,7 @@ function RouteTimeline({ route, colours, placeLabel }: { route: Route; colours: 
 }
 
 // Ask the relay for a fresh trace to `target`, with its pending state.
-function TraceButton({ target, label }: { target: number; label: string }) {
+function TraceButton({ target, label }: { target: string; label: string }) {
   const live = useRoutesLive()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -145,9 +145,9 @@ function RouteSection({
   placeLabel,
 }: {
   links: TopoLink[]
-  nodeId: number
+  nodeId: string
   colours: Colours
-  placeLabel: (id: number) => string
+  placeLabel: (id: string) => string
 }) {
   const [open, setOpen] = useState<number | null>(null)
   const items = links.flatMap((link) => {
@@ -244,7 +244,7 @@ export function NodePanel({
   onBack: () => void
   routes: TopoLink[]
   asColour: Map<number, string>
-  placeLabel: (id: number) => string
+  placeLabel: (id: string) => string
   showMedia: boolean
   routesOn?: boolean
 }) {

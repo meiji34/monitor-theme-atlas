@@ -1,6 +1,7 @@
 # Pushing a tag (v1.2.3 or 1.2.3, matching "version" in theme.json) builds the
 # base theme, without any deployment's data, and publishes it as the release
-# asset theme.tar.gz, which is what the hub installs from a repository URL.
+# asset theme.tar.gz, which is what the hub installs from a repository URL, and
+# atlas-komari.zip for Komari panels.
 name: release
 
 on:
@@ -25,7 +26,9 @@ jobs:
           want="$(node -p "require('./theme.json').version")"
           test "${GITHUB_REF_NAME#v}" = "$want" || { echo "tag $GITHUB_REF_NAME != theme.json $want"; exit 1; }
       - run: npm run pack:base
-      - name: Publish theme.tar.gz
+      # The same theme for Komari panels (atlas-komari.zip); runs second, it rebuilds dist/.
+      - run: npm run pack:komari-base
+      - name: Publish theme.tar.gz and atlas-komari.zip
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" theme.tar.gz --title "Atlas $GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" theme.tar.gz atlas-komari.zip --title "Atlas $GITHUB_REF_NAME" --generate-notes

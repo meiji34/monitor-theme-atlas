@@ -2,13 +2,21 @@
 
 **English** · [繁體中文](README.zh-Hant.md) · [简体中文](README.zh-Hans.md)
 
-A theme for the [monitor](https://monitor-document.pages.dev/) server probe: a globe / flat world map with the nodes lit on it, a node topology drawn as arches, node cards, a table, latency charts and detail pages. Light, Traditional Chinese UI.
+![Atlas: globe with node topology, dark appearance](preview.png)
+
+A theme for the [monitor](https://monitor-document.pages.dev/) server probe: a globe / flat world map with the nodes lit on it, a node topology drawn as arches, node cards, a table, latency charts and detail pages. Light or dark; Traditional Chinese, Simplified Chinese or English.
 
 The theme works on any hub as it is. Three extras are **optional** and need a little setup on your side, because they run on your servers rather than in the browser: [real routes](#real-routes-真實路由), a [submarine cable map](#submarine-cable-map-海纜底圖) and [streaming checks](#streaming-checks-流媒體檢測). Without them the theme simply doesn't show those parts.
 
 ## Install
 
 In the hub: 主題 → install from a repository, using this repository's URL (the hub fetches `theme.tar.gz` from the latest release). Or download `theme.tar.gz` from Releases and upload it on the 主題 page.
+
+### Komari
+
+The same theme runs on [Komari](https://github.com/komari-monitor/komari) (1.6 or later): download `atlas-komari.zip` from Releases and upload it in Komari's admin → 主題設定. Settings appear on Komari's theme settings page. Live data comes from Komari's public API (`/api/nodes`, `/api/rpc2` `common:getNodesLatestStatus`, `/api/records/load` and `/api/records/ping`); Komari's ping tasks show as the latency probes, and the traffic column shows Komari's traffic counter. Topology and location lines take node names (or `#<uuid>`).
+
+Your own data (routes, streaming snapshot) is keyed by the monitor hub's node ids; `node scripts/komari-ids.mjs` matches both hubs' nodes by name and writes `src/data/ids.json`, then `npm run pack:komari` builds `atlas-komari.zip` with it. `npm run dev:komari` proxies to `KOMARI_HUB` from `.env.local`. The live relay (`relay/`) is written for the monitor hub; on Komari the theme falls back to the bundled snapshots.
 
 ## Settings (panel → 主題 → Atlas → 設定)
 

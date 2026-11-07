@@ -23,7 +23,7 @@ export interface Metrics {
 }
 
 export interface Node {
-  id: number
+  id: string
   name: string
   online: boolean
   metrics: Metrics | null

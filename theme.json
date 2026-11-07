@@ -2,7 +2,7 @@
   "name": "Atlas",
   "short": "atlas",
   "description": "海圖風格的地球／平面地圖、節點拓撲、真實路由與流媒體檢測，支援深色與三種語言",
-  "version": "0.15.0",
+  "version": "0.17.0",
   "author": "yddsfj",
   "url": "https://github.com/meiji34/monitor-theme-atlas",
   "config": [

@@ -1,5 +1,6 @@
 import { geoDistance } from 'd3-geo'
 import type { Link, LngLat, Place } from './geo'
+import { nodeId } from './ids'
 import { SERIES } from './palette'
 
 // Real network paths behind the topology links, written by scripts/routes.mjs
@@ -22,8 +23,8 @@ export interface RouteHop {
   via?: Via // the crossing from the previous waypoint to this one
 }
 export interface Route {
-  from: number
-  to: number
+  from: string
+  to: string
   traced: string
   hops: RouteHop[]
   tail?: Via // the crossing from the last hop to the destination
@@ -45,7 +46,11 @@ export const PLAIN_SEA = '海路推估'
 const files = import.meta.env.VITE_ATLAS_BASE
   ? {}
   : import.meta.glob<RouteData>('../data/routes.json', { eager: true, import: 'default' })
-const SNAPSHOT: RouteData | null = Object.values(files)[0] ?? null
+// Route ends are stored as the data's ids (numbers from the monitor hub);
+// in the app they are hub node ids (strings, uuids on Komari).
+const withNodeIds = (routes: Route[]) => routes.map((r) => ({ ...r, from: nodeId(r.from), to: nodeId(r.to) }))
+const bundled = Object.values(files)[0]
+const SNAPSHOT: RouteData | null = bundled ? { ...bundled, routes: withNodeIds(bundled.routes) } : null
 // The bundled snapshot, with any routes the relay traced since laid over it
 // (see useRoutes). A live binding: importers always see the current data.
 export let ROUTES: RouteData | null = SNAPSHOT
@@ -55,7 +60,7 @@ export function setLiveRoutes(live: Pick<RouteData, 'routes' | 'asns'> | null) {
     return
   }
   const byLink = new Map((SNAPSHOT?.routes ?? []).map((r) => [`${r.from}>${r.to}`, r]))
-  for (const r of live.routes) byLink.set(`${r.from}>${r.to}`, r)
+  for (const r of withNodeIds(live.routes)) byLink.set(`${r.from}>${r.to}`, r)
   const routes = [...byLink.values()]
   ROUTES = {
     generated: routes.map((r) => r.traced).sort().at(-1) ?? SNAPSHOT?.generated ?? '',
@@ -133,7 +138,7 @@ export function routeLegs(route: Route, from: LngLat, to: LngLat, labels: { from
 // drawn as the most segments (then the most distance) across all routes get
 // the categorical hues in order; the rest, and exchange points, stay neutral.
 export const OTHER_AS = '#94a3b8'
-export function asColours(places: Map<number, Place>): Map<number, string> {
+export function asColours(places: Map<string, Place>): Map<number, string> {
   const score = new Map<number, { segs: number; dist: number }>()
   for (const r of ROUTES?.routes ?? []) {
     const a = places.get(r.from)

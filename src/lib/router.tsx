@@ -7,11 +7,12 @@ export type Route =
   | { view: 'cards' }
   | { view: 'table' }
   | { view: 'latency' }
-  | { view: 'node'; id: number }
+  | { view: 'node'; id: string }
 
 export function parse(path: string): Route {
-  const node = /^\/node\/(\d+)\/?$/.exec(path)
-  if (node) return { view: 'node', id: Number(node[1]) }
+  // /node/<id> on monitor, /instance/<uuid> on Komari (its own theme's links).
+  const node = /^\/(?:node|instance)\/([\w-]+)\/?$/.exec(path)
+  if (node) return { view: 'node', id: node[1] }
   if (path.startsWith('/cards')) return { view: 'cards' }
   if (path.startsWith('/table')) return { view: 'table' }
   if (path.startsWith('/latency')) return { view: 'latency' }

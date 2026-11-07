@@ -1,3 +1,4 @@
+import { dataId, nodeId } from './ids'
 import type { Node } from './types'
 
 // [longitude, latitude], the order d3-geo expects.
@@ -160,7 +161,7 @@ export function parseLocations(text: string): Map<string, Place> {
 }
 
 export function locate(node: Node, overrides: Map<string, Place>): Place | null {
-  const o = overrides.get(`#${node.id}`) ?? overrides.get(node.name.toLowerCase())
+  const o = overrides.get(`#${node.id}`) ?? overrides.get(`#${dataId(node.id)}`) ?? overrides.get(node.name.toLowerCase())
   if (o) return o
   const city = findCity(node.name)
   if (city) return { coord: city.coord, label: city.name, source: 'name' }
@@ -181,11 +182,11 @@ export interface Link {
   label: string
 }
 
-function resolveEndpoint(token: string, nodes: Node[], places: Map<number, Place>): Endpoint | null {
+function resolveEndpoint(token: string, nodes: Node[], places: Map<string, Place>): Endpoint | null {
   const t = token.trim()
-  const byId = /^#(\d+)$/.exec(t)
+  const byId = /^#([\w-]+)$/.exec(t)
   const node = byId
-    ? nodes.find((n) => n.id === Number(byId[1]))
+    ? nodes.find((n) => n.id === byId[1] || n.id === nodeId(byId[1]))
     : nodes.find((n) => n.name.toLowerCase() === t.toLowerCase())
   if (node) {
     const p = places.get(node.id)
@@ -200,13 +201,13 @@ function resolveEndpoint(token: string, nodes: Node[], places: Map<number, Place
 // Automatic topology: one hub node linked to every other located node. The
 // hub is the node named in the settings (name or #id), else the first node.
 // Nodes sharing the hub's spot are skipped, a zero-length arc draws nothing.
-export function hubTopology(token: string, nodes: Node[], places: Map<number, Place>): Link[] {
+export function hubTopology(token: string, nodes: Node[], places: Map<string, Place>): Link[] {
   const t = token.trim()
-  const byId = /^#(\d+)$/.exec(t)
+  const byId = /^#([\w-]+)$/.exec(t)
   const hub =
     (t &&
       (byId
-        ? nodes.find((n) => n.id === Number(byId[1]))
+        ? nodes.find((n) => n.id === byId[1] || n.id === nodeId(byId[1]))
         : nodes.find((n) => n.name.toLowerCase() === t.toLowerCase()))) ||
     nodes.find((n) => places.has(n.id))
   const hp = hub && places.get(hub.id)
@@ -222,7 +223,7 @@ export function hubTopology(token: string, nodes: Node[], places: Map<number, Pl
 }
 
 // Each line is a chain "A -> B -> C | label"; unresolvable hops are skipped.
-export function parseTopology(text: string, nodes: Node[], places: Map<number, Place>): Link[] {
+export function parseTopology(text: string, nodes: Node[], places: Map<string, Place>): Link[] {
   const links: Link[] = []
   for (const raw of text.split('\n')) {
     const line = raw.trim()
