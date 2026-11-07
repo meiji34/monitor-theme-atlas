@@ -12,8 +12,9 @@ codes), coordinates rounded to 0.001° here and 0.01° in the base map.
 
 These files are shared under the same licence:
 
-- **Attribution**: credit TeleGeography (the map shows "海纜資料 © TeleGeography
-  2022 · CC BY-NC-SA 3.0" with links whenever the cables are drawn).
+- **Attribution**: credit TeleGeography (the map shows "Cable data © TeleGeography
+  2022 · CC BY-NC-SA 3.0", in the interface language, with links whenever the cables
+  are drawn).
 - **NonCommercial**: no commercial use. The rest of the theme carries no such
   restriction; remove these two files for a commercial deployment.
 - **ShareAlike**: adaptations go out under the same licence.

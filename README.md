@@ -1,6 +1,6 @@
 # Atlas
 
-**English** · [繁體中文](README.zh-Hant.md) · [简体中文](README.zh-Hans.md)
+**English** · [Traditional Chinese](README.zh-Hant.md) · [Simplified Chinese](README.zh-Hans.md)
 
 **Live demo: [status.yddsfj.uk](https://status.yddsfj.uk)** (the banner picture there is the site owner's own and doesn't ship with the theme)
 
@@ -8,37 +8,39 @@
 
 A theme for the [monitor](https://monitor-document.pages.dev/) server probe: a globe / flat world map with the nodes lit on it, a node topology drawn as arches, node cards, a table, latency charts and detail pages. Light or dark; Traditional Chinese, Simplified Chinese or English.
 
-The theme works on any hub as it is. Three extras are **optional** and need a little setup on your side, because they run on your servers rather than in the browser: [real routes](#real-routes-真實路由), a [submarine cable map](#submarine-cable-map-海纜底圖) and [streaming checks](#streaming-checks-流媒體檢測). Without them the theme simply doesn't show those parts.
+The theme works on any hub as it is. Three extras are **optional** and need a little setup on your side, because they run on your servers rather than in the browser: [real routes](#real-routes), a [submarine cable map](#submarine-cable-map) and [streaming checks](#streaming-checks). Without them the theme simply doesn't show those parts.
 
 ## Install
 
-In the hub: 主題 → install from a repository, using this repository's URL (the hub fetches `theme.tar.gz` from the latest release). Or download `theme.tar.gz` from Releases and upload it on the 主題 page.
+In the hub's admin panel, open the Themes page and install from a repository, using this repository's URL (the hub fetches `theme.tar.gz` from the latest release). Or download `theme.tar.gz` from Releases and upload it on the same page.
 
 ### Komari (paused)
 
-Komari support is paused and no longer released; the code below stays for reference. The same theme runs on [Komari](https://github.com/komari-monitor/komari) (1.6 or later): download `atlas-komari.zip` from Releases and upload it in Komari's admin → 主題設定. Settings appear on Komari's theme settings page. Live data comes from Komari's public API (`/api/nodes`, `/api/rpc2` `common:getNodesLatestStatus`, `/api/records/load` and `/api/records/ping`); Komari's ping tasks show as the latency probes, and the traffic column shows Komari's traffic counter. Topology and location lines take node names (or `#<uuid>`).
+Komari support is paused and no longer released; the code below stays for reference. The same theme runs on [Komari](https://github.com/komari-monitor/komari) (1.6 or later): download `atlas-komari.zip` from Releases and upload it on the theme settings page of Komari's admin panel. Settings appear on Komari's theme settings page. Live data comes from Komari's public API (`/api/nodes`, `/api/rpc2` `common:getNodesLatestStatus`, `/api/records/load` and `/api/records/ping`); Komari's ping tasks show as the latency probes, and the traffic column shows Komari's traffic counter. Topology and location lines take node names (or `#<uuid>`).
 
 Your own data (routes, streaming snapshot) is keyed by the monitor hub's node ids; `node scripts/komari-ids.mjs` matches both hubs' nodes by name and writes `src/data/ids.json`, then `npm run pack:komari` builds `atlas-komari.zip` with it. `npm run dev:komari` proxies to `KOMARI_HUB` from `.env.local`. The live relay (`relay/`) is written for the monitor hub; on Komari the theme falls back to the bundled snapshots.
 
-## Settings (panel → 主題 → Atlas → 設定)
+## Settings (admin panel → Themes → Atlas → Settings)
 
-- **節點位置**: one line per node, `name or #id = city` or `= lat,lng`. Nodes without a line are placed by a city keyword in their name (English, Chinese or IATA code, see `src/lib/geo.ts`), then by country.
+The panel shows the setting names in Chinese; the key each one is stored under is given in brackets.
+
+- **Node locations** (`locations`): one line per node, `name or #id = city` or `= lat,lng`. Nodes without a line are placed by a city keyword in their name (English, Chinese or IATA code, see `src/lib/geo.ts`), then by country.
   ```
   Tokyo Node A = Osaka
   #8 = -36.85,174.76
   ```
-- **節點拓撲**: one chain per line, hops joined by `->`. A hop is a node name, `#id`, a city name or `lat,lng`; text after `|` is the label.
+- **Node topology** (`topology`): one chain per line, hops joined by `->`. A hop is a node name, `#id`, a city name or `lat,lng`; text after `|` is the label.
   ```
-  Guangzhou -> HK Relay -> SG Node | 中轉
-  #1 -> #4 | 落地
+  Guangzhou -> HK Relay -> SG Node | relay
+  #1 -> #4 | exit
   ```
-  Links are blue and animated while every node on them is online, red and dashed otherwise. With no custom topology, the 中心節點 (or the first node) is linked to every other node.
+  Links are blue and animated while every node on them is online, red and dashed otherwise. With no custom topology, the hub node (`topology_hub`, or else the first node) is linked to every other node.
 - Map mode, auto-rotation, lit countries, map labels, grey-out of cables no route rides, summary tiles, which latency probes the cards show, offline ordering, a notice line, and the switches for the optional extras.
 
-- **Banner** (橫幅) above the overview: eyebrow, headline (the site name when empty), subtitle and a live status line, over your own pictures (one `name | https://url | focus` per line, focus being the `x% y%` spot to keep in frame, e.g. a face; the banner keeps one shape as the screen widens, so that spot stays whole; switched with the arrows, optionally rotating) and an optional corner avatar. No artwork ships with the theme. It can be switched off.
-- **Background image** (背景圖片網址, blur, dimming): with one set, panels turn to frosted glass, its blur and opacity adjustable. Visitors can use their own picture instead (a URL, or an upload that stays in their browser), tune it, or switch it off in ⚙.
+- **Banner** (`show_hero`, `hero_*`) above the overview: eyebrow, headline (the site name when empty), subtitle and a live status line, over your own pictures (one `name | https://url | focus` per line, focus being the `x% y%` spot to keep in frame, e.g. a face; the banner keeps one shape as the screen widens, so that spot stays whole; switched with the arrows, optionally rotating) and an optional corner avatar. No artwork ships with the theme. It can be switched off.
+- **Background image** (`background_url`, `background_blur`, `background_dim`; glass: `glass`, `glass_blur`, `glass_opacity`): with one set, panels turn to frosted glass, its blur and opacity adjustable. Visitors can use their own picture instead (a URL, or an upload that stays in their browser), tune it, or switch it off in ⚙.
 
-Clicking a node in the cards, table or latency view opens its details in a dialog (resources, network and traffic, latency and loss, server info, with a time range); 「完整詳情」 opens the full page. Esc or Back closes it.
+Clicking a node in the cards, table or latency view opens its details in a dialog (resources, network and traffic, latency and loss, server info, with a time range); "Full details" opens the full page. Esc or Back closes it.
 
 The map zooms with Ctrl/⌘ + wheel or the +/− buttons, so plain scrolling still scrolls the page.
 
@@ -52,9 +54,9 @@ The map zooms with Ctrl/⌘ + wheel or the +/− buttons, so plain scrolling sti
 
 Real routes and snapshot streaming checks are baked into **your own build**: generate the data, then `npm run pack` and upload that `theme.tar.gz` to your hub. The data lands in `src/data/` and `scripts/data/`, which are git-ignored and never part of the public release.
 
-### Real routes (真實路由)
+### Real routes
 
-The 「路由」 map button (and the 真實路由 switch in ⚙) redraws each topology link along the real path, coloured by network, with a legend and an AS-by-AS timeline in the node sidebar.
+The "Routes" map button (and the "Real routes" switch in ⚙) redraws each topology link along the real path, coloured by network, with a legend and an AS-by-AS timeline in the node sidebar.
 
 ```bash
 cp routes.local.example.json routes.local.json   # then fill in your nodes
@@ -68,11 +70,11 @@ npm run pack
 
 Without the cable data below, sea crossings are drawn as plain water paths over a 0.25° raster of Natural Earth land (public domain, via `world-atlas`).
 
-**Live mode**: with the relay from [`relay/`](relay/README.md) installed, routes are traced by the relay instead (from the source node to every node, daily, and on a logged-in admin's 「追蹤路由」 / 「重新追蹤」), new nodes included as soon as their agent runs; no repacking.
+**Live mode**: with the relay from [`relay/`](relay/README.md) installed, routes are traced by the relay instead (from the source node to every node, daily, and when a logged-in admin presses "Trace route" / "Trace again"), new nodes included as soon as their agent runs; no repacking.
 
 Caveats: a traceroute shows one direction only (the return path can differ), routes change, and which cable carries a leg is an inference; re-run and repack to refresh.
 
-### Submarine cable map (海纜底圖)
+### Submarine cable map
 
 With it, sea crossings follow submarine cables and the full cable map is drawn underneath in TeleGeography's colours (name, ready-for-service year, length and owners on hover). The data is TeleGeography's Submarine Cable Map as TeleGeography published it on GitHub under **CC BY-NC-SA 3.0** (last snapshot 2022-08-05, 516 cables, 1,375 landing stations). The repository has since been taken down; the Internet Archive keeps the snapshot (`web.archive.org/web/2022*/github.com/telegeography/www.submarinecablemap.com`). It is **not included here**: the licence is non-commercial, so import it yourself only for a non-commercial status page.
 
@@ -86,7 +88,7 @@ This writes `scripts/data/submarine-cables.json` (for matching) and `src/data/ca
 
 A traceroute can't name the cable, so for each leg between two shores `scripts/lib/cables.mjs` finds the cheapest path through a graph of every in-service cable's drawing: by land to a landing in reach (same country and landmass, or under 300 km), along one or more cables (each extra system costs a little, stations within 60 km count as one), by land to the far waypoint; cables the carrier co-owns are a fifth cheaper. Cables still planned in the snapshot are drawn dashed but never matched. The lines are TeleGeography's stylised drawings, not surveyed routes, and the snapshot predates cables opened after mid-2022.
 
-### Streaming checks (流媒體檢測)
+### Streaming checks
 
 Node details, the sidebar and the node cards show whether streaming and AI services work from each node: Netflix (full / originals only), Disney+, YouTube Premium, Prime Video, ChatGPT (full / web only), Claude, Gemini, Bilibili HK/MO/TW, Abema, Spotify and TikTok, each with the country the service places the node in (amber when it differs from the node's own country). Two ways to feed it:
 
@@ -98,13 +100,13 @@ Node details, the sidebar and the node cards show whether streaming and AI servi
   npm run pack
   ```
   The script pipes `scripts/lib/media-check.sh` into `sh -s` over SSH: plain IPv4 HTTPS requests with curl, nothing installed on the node. A node whose `mtr` runs as another user is checked as that user too. Only verdicts and country codes are written.
-- **Live**, with the relay from [`relay/`](relay/README.md) next to the hub: results come from it, nodes re-check once a day on their own, and a logged-in admin gets 「點擊檢測」 / 「重新檢測」 buttons; a request is picked up within a minute. This works with the public release too, no rebuild needed: the theme looks for the relay at `/atlas-media/` and uses it when it answers.
+- **Live**, with the relay from [`relay/`](relay/README.md) next to the hub: results come from it, nodes re-check once a day on their own, and a logged-in admin gets "Check now" / "Check again" buttons; a request is picked up within a minute. This works with the public release too, no rebuild needed: the theme looks for the relay at `/atlas-media/` and uses it when it answers.
 
-Without either, the section isn't shown. Bahamut 動畫瘋 isn't included: it answers scripted requests with a 403 whatever the region. TikTok sometimes serves a challenge page to datacenter addresses, shown as 無法判斷.
+Without either, the section isn't shown. Bahamut Anime Crazy isn't included: it answers scripted requests with a 403 whatever the region. TikTok sometimes serves a challenge page to datacenter addresses, shown as "Unknown".
 
 ## Language and appearance
 
-The interface comes in Traditional Chinese, Simplified Chinese and English (the globe button in the top bar), and light or dark (the moon / sun button; the settings menu also offers "system"). The site's defaults are theme settings (預設語言, 預設外觀); a visitor's choice is kept in their browser. Strings live in `src/lib/i18n.ts`, written in Traditional Chinese in the code and looked up there for the other two.
+The interface comes in Traditional Chinese, Simplified Chinese and English (the globe button in the top bar), and light or dark (the moon / sun button; the settings menu also offers "system"). The site's defaults are theme settings (`default_lang`, `color_scheme`); a visitor's choice is kept in their browser. Strings live in `src/lib/i18n.ts`, written in Traditional Chinese in the code and looked up there for the other two.
 
 ## Development
 

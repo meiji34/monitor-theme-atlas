@@ -1,7 +1,7 @@
 # Relay: live streaming checks and route tracing
 
 Lets the theme show live streaming-check results and traced routes, and lets
-a logged-in hub admin press 「點擊檢測」 / 「重新檢測」 and 「追蹤路由」 / 「重新追蹤」.
+a logged-in hub admin press "Check now" / "Check again" and "Trace route" / "Trace again".
 Without it the theme falls back to the snapshots bundled by `scripts/media.mjs`
 and `scripts/routes.mjs`.
 
@@ -77,8 +77,9 @@ as root:
 1. **Hub**: `sh media-install-hub.sh` → `/opt/media-relay/`, `/etc/media-relay/tokens.json`
    (0600), `media-relay.service`; prints the listening socket and `/results`.
 2. **Reverse proxy**: add a location for `/atlas-media/` → `http://127.0.0.1:28090`
-   (no path after the port). With 1Panel: 網站 → the status site → 反向代理 →
-   建立, 前端請求路徑 `/atlas-media/`, 後端代理地址 `http://127.0.0.1:28090`.
+   (no path after the port). With 1Panel: Websites → the status site → Reverse proxy →
+   Create, with the front-end request path `/atlas-media/` and the back-end proxy address
+   `http://127.0.0.1:28090`.
    Check: `curl https://<hub>/atlas-media/results`.
 3. **Each node**: `sh media-install-<id>.sh` → `/opt/media-check/`, `/etc/media-check.env`,
    `media-check.timer` (or a line in `/etc/crontabs/monitor-agent` on Alpine);
