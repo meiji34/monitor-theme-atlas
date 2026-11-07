@@ -21,8 +21,22 @@ is refreshed once a day.
 
 Admins are recognised by passing their cookie to the hub's own /api/me. Nodes
 authenticate with a per-node token. Nodes only ever connect out to the hub;
-the relay holds no credentials for them.
+the relay holds no credentials for them, and can't make them run anything but
+the two fixed probes (streaming check, mtr to a node).
+
+New nodes join with a one-time code:
+
+  GET  /atlas-media/install.sh      public: the node installer (takes the code)
+  GET  /atlas-media/files/<name>    public: the probe scripts it installs
+  POST /atlas-media/enroll          a node trades its code for its own token
+
+  python3 media-relay.py enroll <hub node id or name> <site URL>   (root, on the hub)
+prints the one-line install command with a fresh code: single use, 24 hours.
 """
+
+import hashlib
+import secrets
+import sys
 
 import hmac
 import json
@@ -45,8 +59,77 @@ MAX_BODY = 32 * 1024
 ALIVE = 300  # s since a node's last poll for it to count as running the agent
 STALE = 600  # s after which a request no node picked up is dropped
 
+STATE_DIR = os.environ.get('STATE_DIRECTORY') or '/var/lib/private/media-relay'
+ENROLLED = os.path.join(STATE_DIR, 'enrolled.json')  # node -> sha256 of its token
+CODES = os.path.join(STATE_DIR, 'enroll-codes.json')  # sha256 of a code -> {node, expires}
+FILES = os.environ.get('NODE_FILES') or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'node')
+SERVED = {'install.sh', 'report.sh', 'media-check.sh', 'media-check.service', 'media-check.timer'}
+CODE_TTL = 86400
+
+
+def sha(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def load_json(path, default):
+    try:
+        with open(path, encoding='utf-8') as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return default
+
+
+def write_json(path, data, mode=0o600):
+    tmp = path + '.tmp'
+    with open(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode), 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+    os.chmod(tmp, mode)
+    os.replace(tmp, path)
+
+
+def hub_nodes():
+    req = urllib.request.Request(HUB + '/api/nodes', headers={'Accept': 'application/json'})
+    with urllib.request.urlopen(req, timeout=5) as res:
+        return json.load(res).get('nodes') or []
+
+
+def enroll_cli(args):
+    """Root on the hub: issue a one-time code for a hub node, print the command."""
+    if not args:
+        sys.exit('usage: media-relay.py enroll <hub node id or name> [site URL, e.g. https://status.example.com]')
+    want = args[0].strip().lstrip('#')
+    nodes = hub_nodes()
+    node = next((n for n in nodes if str(n.get('id')) == want), None) or next(
+        (n for n in nodes if str(n.get('name', '')).strip().lower() == want.lower()), None)
+    if not node:
+        listed = ', '.join(f"#{n.get('id')} {n.get('name')}" for n in nodes)
+        sys.exit(f'no hub node {want!r} (its public page must list it): {listed}')
+    if not os.path.isdir(STATE_DIR):
+        sys.exit(f'{STATE_DIR} missing: start media-relay.service once first')
+    code = secrets.token_urlsafe(24)
+    codes = {k: c for k, c in load_json(CODES, {}).items() if c.get('expires', 0) > time.time()}
+    codes[sha(code)] = {'node': str(node['id']), 'expires': int(time.time()) + CODE_TTL}
+    # Only hashes are stored; the relay's dynamic user must be able to read and replace it.
+    write_json(CODES, codes, 0o644)
+    owner = os.stat(STATE_DIR)
+    if hasattr(os, "chown"):
+        os.chown(CODES, owner.st_uid, owner.st_gid)
+    site = (args[1] if len(args) > 1 else 'https://<your hub>').rstrip('/')
+    print(f"code for #{node['id']} {node.get('name')}: single use, valid 24 h. Run on that node as root:")
+    print(f'curl -fsSL {site}{PREFIX}/install.sh | sh -s -- {code}')
+
+
+if __name__ == '__main__' and sys.argv[1:2] == ['enroll']:
+    enroll_cli(sys.argv[2:])
+    sys.exit(0)
+
 with open(TOKENS, encoding='utf-8') as f:
     TOKEN = {str(k): str(v) for k, v in json.load(f).items()}
+TOKEN_SHA = load_json(ENROLLED, {})  # nodes that joined with a code
+
+
+def nodes_with_token():
+    return set(TOKEN) | set(TOKEN_SHA)
 
 lock = threading.Lock()
 try:
@@ -88,7 +171,7 @@ def target_of(node):
 def traceable():
     if not route_build:
         return []
-    ids = set(TOKEN) | set(NODEINFO['nodes'])
+    ids = nodes_with_token() | set(NODEINFO['nodes'])
     return sorted((n for n in ids if n != SOURCE and target_of(n)), key=int)
 
 
@@ -364,8 +447,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def node_token_ok(self, node):
         auth = self.headers.get('Authorization', '')
+        if not auth.startswith('Bearer '):
+            return False
+        given = auth[7:]
+        if node in TOKEN_SHA:  # enrolled with a code: that token replaces a static one
+            return hmac.compare_digest(sha(given), TOKEN_SHA[node])
         token = TOKEN.get(node)
-        return bool(token) and auth.startswith('Bearer ') and hmac.compare_digest(auth[7:], token)
+        return bool(token) and hmac.compare_digest(given, token)
 
     def do_GET(self):
         parts = self.route()
@@ -375,9 +463,9 @@ class Handler(BaseHTTPRequestHandler):
                 body = {
                     'nodes': state['nodes'],
                     'pending': sorted(state['pending'], key=int),
-                    'known': sorted(TOKEN, key=int),
+                    'known': sorted(nodes_with_token(), key=int),
                     # Nodes whose agent polled lately: only these can take a request.
-                    'agents': sorted((n for n in TOKEN if alive(n)), key=int),
+                    'agents': sorted((n for n in nodes_with_token() if alive(n)), key=int),
                     'cooldown': COOLDOWN,
                 }
             return self.reply(200, body)
@@ -398,6 +486,12 @@ class Handler(BaseHTTPRequestHandler):
                     'cooldown': COOLDOWN,
                 }
             return self.reply(200, body)
+        if parts == ['install.sh'] or (len(parts) == 2 and parts[0] == 'files' and parts[1] in SERVED):
+            try:
+                with open(os.path.join(FILES, parts[-1]), 'rb') as f:
+                    return self.reply(200, f.read())
+            except OSError:
+                return self.reply(404, {'error': 'not installed'})
         if len(parts) == 3 and parts[0] == 'agent' and parts[2] == 'jobs':
             node = parts[1]
             if not self.node_token_ok(node):
@@ -422,6 +516,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parts = self.route()
+        if parts == ['enroll']:
+            size = int(self.headers.get('Content-Length') or 0)
+            if size <= 0 or size > 256:
+                return self.reply(413, {'error': 'size'})
+            code = self.rfile.read(size).decode('utf-8', 'replace').strip()
+            with lock:
+                codes = load_json(CODES, {})
+                entry = codes.pop(sha(code), None)
+                if not entry or entry.get('expires', 0) < time.time():
+                    time.sleep(1)  # a wrong guess costs a second
+                    return self.reply(403, {'error': 'code'})
+                node = entry['node']
+                token = secrets.token_urlsafe(32)
+                TOKEN_SHA[node] = sha(token)
+                write_json(ENROLLED, TOKEN_SHA)
+                write_json(CODES, codes, 0o644)
+            print(f'node #{node} enrolled', flush=True)
+            return self.reply(200, {'node': node, 'token': token})
         if len(parts) == 2 and parts[0] == 'check':
             node = parts[1]
             # Only the theme's own requests: a custom header can't be sent
@@ -432,7 +544,7 @@ class Handler(BaseHTTPRequestHandler):
             host = self.headers.get('Host', '')
             if origin and origin.split('://', 1)[-1] != host:
                 return self.reply(403, {'error': 'origin'})
-            if node not in TOKEN:
+            if node not in nodes_with_token():
                 return self.reply(404, {'error': 'node'})
             if not hub_admin(self.headers.get('Cookie')):
                 return self.reply(401, {'error': 'login'})

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Backdrop } from './components/Backdrop'
 import { MapView, type MapPoint } from './components/MapView'
 import { NodeCard, pingLines } from './components/NodeCard'
+import { NodeDialog } from './components/NodeDialog'
 import { NodeList, StatusBar } from './components/NodeList'
 import { NodePanel } from './components/NodePanel'
 import type { VisitorSettings } from './components/Settings'
@@ -12,11 +14,12 @@ import { DarkContext, SCHEMES } from './lib/scheme'
 import { hasCables } from './lib/cables'
 import { MediaContext, useMediaProvider } from './lib/useMedia'
 import { RoutesContext, useRoutesProvider } from './lib/useRoutes'
+import { useBackdrop } from './lib/backdrop'
 import { useThemeConfig } from './lib/config'
 import { hubTopology, locate, parseLocations, parseTopology, type LngLat, type Place } from './lib/geo'
 import { useLiveNodes, usePingSeries } from './lib/live'
 import { asColours, routeFor } from './lib/routes'
-import { useRoute } from './lib/router'
+import { useDialogNode, useRoute } from './lib/router'
 import type { Me, Node } from './lib/types'
 import { LatencyView } from './views/LatencyView'
 import { NodeDetail } from './views/NodeDetail'
@@ -65,6 +68,7 @@ const ON_OFF = ['on', 'off'] as const
 export default function App() {
   const cfg = useThemeConfig()
   const route = useRoute()
+  const dialogId = useDialogNode()
   const { nodes, loaded, error, mode: liveMode } = useLiveNodes()
   const [me, setMe] = useState<Me>({})
   const media = useMediaProvider(!!me.authed)
@@ -96,6 +100,7 @@ export default function App() {
     return () => mq.removeEventListener('change', on)
   }, [])
   const dark = scheme === 'dark' || (scheme === 'system' && systemDark)
+  const backdrop = useBackdrop(cfg)
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
   }, [dark])
@@ -175,6 +180,8 @@ export default function App() {
     .filter(Boolean)
   const linesFor = (n: Node) => pingLines(ping[n.id], wanted)
 
+  const dialog = dialogId && route.view !== 'node' ? sorted.find((n) => n.id === dialogId) : undefined
+
   const focusNode = (n: Node) => {
     const p = places.get(n.id)
     if (p) setFocus([...p.coord])
@@ -242,8 +249,11 @@ export default function App() {
     setLang: setLangPref,
     scheme,
     setScheme,
+    backdrop,
     reset: () =>
-      [resetMapMode, resetTopo, resetSpin, resetLabels, resetLit, resetRoutes, resetLang, resetScheme, resetCableGrey].forEach((r) => r()),
+      [resetMapMode, resetTopo, resetSpin, resetLabels, resetLit, resetRoutes, resetLang, resetScheme, resetCableGrey, backdrop.reset].forEach((r) =>
+        r(),
+      ),
   }
 
   let body: React.ReactNode
@@ -355,6 +365,7 @@ export default function App() {
     <DarkContext.Provider value={dark}>
       <MediaContext.Provider value={media}>
         <RoutesContext.Provider value={liveRoutes}>
+          <Backdrop bd={backdrop.bd} />
           <TopNav
             settings={settings}
             authed={!!me.authed}
@@ -377,6 +388,9 @@ export default function App() {
 
             <StatusBar nodes={sorted} live={liveMode} />
           </div>
+          {dialog && (
+            <NodeDialog key={dialog.id} node={dialog} ping={ping[dialog.id]} historyDays={me.history_days ?? 30} showMedia={cfg.show_media} />
+          )}
         </RoutesContext.Provider>
       </MediaContext.Provider>
     </DarkContext.Provider>

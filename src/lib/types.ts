@@ -75,6 +75,7 @@ export interface MetricRow {
   minutes?: number
   cpu?: number
   cpu_max?: number
+  load?: number // 1-minute load (Komari only)
   mem_used?: number
   swap_used?: number
   disk_used?: number

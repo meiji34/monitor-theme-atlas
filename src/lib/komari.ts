@@ -226,6 +226,7 @@ export async function fetchKThemeConfig(): Promise<Record<string, unknown>> {
 interface KLoad {
   time: string
   cpu?: number
+  load?: number
   ram?: number
   swap?: number
   disk?: number
@@ -273,6 +274,7 @@ function bucket(rows: KLoad[], hours: number, points: number): { step: number; r
       minutes: g.length,
       cpu: avg(g, (r) => r.cpu),
       cpu_max: max(g, (r) => r.cpu),
+      load: avg(g, (r) => r.load),
       mem_used: avg(g, (r) => r.ram),
       swap_used: avg(g, (r) => r.swap),
       disk_used: avg(g, (r) => r.disk),

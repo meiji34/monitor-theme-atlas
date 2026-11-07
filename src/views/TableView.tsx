@@ -3,7 +3,7 @@ import { latencyTone, type PingLine } from '../components/NodeCard'
 import { Rate } from '../components/Rate'
 import { bytes, compactRate, duration, expiry, pct } from '../lib/format'
 import { t } from '../lib/i18n'
-import { navigate } from '../lib/router'
+import { openNode } from '../lib/router'
 import type { Node } from '../lib/types'
 
 function Bar({ v }: { v: number }) {
@@ -40,7 +40,7 @@ export function TableView({ nodes, lines }: { nodes: Node[]; lines: (n: Node) =>
             return (
               <tr
                 key={n.id}
-                onClick={() => navigate(`/node/${n.id}`)}
+                onClick={() => openNode(n.id)}
                 className={`cursor-pointer border-b border-line/70 last:border-0 hover:bg-primary-soft/50 ${n.online ? '' : 'opacity-60'}`}
               >
                 <td className="px-3 py-5">

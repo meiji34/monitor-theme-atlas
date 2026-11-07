@@ -59,7 +59,9 @@ function hubScript() {
 #   /etc/media-relay/tokens.json               node tokens (root only, 0600)
 #   /etc/media-relay/nodes.json                node addresses to trace (root only, 0600)
 #   /etc/systemd/system/media-relay.service    listens on 127.0.0.1:28090 only
-# No existing file is changed. The site's reverse proxy still needs a
+#   /opt/media-relay/node/                     node installer + probes it serves
+#                                              (one-line install with a code)
+# Files from an earlier install are first saved to /root/media-relay-backup-<time>.tgz. The site's reverse proxy still needs a
 # location for /atlas-media/ -> http://127.0.0.1:28090 (see relay/README.md).
 # Remove with: sh $0 --uninstall
 set -eu
@@ -73,12 +75,23 @@ if [ "\${1:-}" = --uninstall ]; then
   exit 0
 fi
 command -v python3 >/dev/null || { echo "python3 missing" >&2; exit 1; }
-install -d -m 755 /opt/media-relay
+if [ -e /opt/media-relay ] || [ -e /etc/media-relay ] || [ -e /etc/systemd/system/media-relay.service ]; then
+  b=/root/media-relay-backup-$(date +%Y%m%d-%H%M%S).tgz
+  tar -czf "$b" $(for p in /opt/media-relay /etc/media-relay /etc/systemd/system/media-relay.service; do [ -e "$p" ] && echo "$p"; done)
+  chmod 600 "$b"
+  echo "backup: $b"
+fi
+install -d -m 755 /opt/media-relay /opt/media-relay/node
 ${here('__RELAY__', read('relay/media-relay.py'), '/opt/media-relay/media-relay.py')}
 ${here('__ROUTEPY__', read('relay/route_build.py'), '/opt/media-relay/route_build.py')}
 ${here('__TABLES__', routeTables(), '/opt/media-relay/route-tables.json')}
 ${existsSync(resolve(root, 'scripts/data/submarine-cables.json')) ? here('__CABLES__', read('scripts/data/submarine-cables.json'), '/opt/media-relay/submarine-cables.json') : 'rm -f /opt/media-relay/submarine-cables.json'}
-chmod 644 /opt/media-relay/*
+${here('__NINSTALL__', read('relay/node/install.sh').replace("HUB='__HUB__'", `HUB='${cfg.hub}'`), '/opt/media-relay/node/install.sh')}
+${here('__NPROBE__', read('scripts/lib/media-check.sh'), '/opt/media-relay/node/media-check.sh')}
+${here('__NREPORT__', read('relay/node/report.sh'), '/opt/media-relay/node/report.sh')}
+${here('__NSERVICE__', read('relay/node/media-check.service'), '/opt/media-relay/node/media-check.service')}
+${here('__NTIMER__', read('relay/node/media-check.timer'), '/opt/media-relay/node/media-check.timer')}
+chmod 644 /opt/media-relay/*.py /opt/media-relay/*.json /opt/media-relay/node/*
 install -d -m 700 /etc/media-relay
 umask 077
 ${here('__TOKENS__', JSON.stringify(cfg.tokens, null, 1), '/etc/media-relay/tokens.json')}
@@ -91,7 +104,9 @@ systemctl restart media-relay.service
 sleep 2
 systemctl --no-pager --lines=3 status media-relay.service | head -n 5
 echo "--- listening:"; ss -ltn | grep ':28090 ' || echo "not listening"
-echo "--- results:"; curl -s --max-time 5 http://127.0.0.1:28090/atlas-media/results; echo
+echo "--- results:"; curl -s --max-time 5 http://127.0.0.1:28090/atlas-media/results | head -c 300; echo
+echo "--- node installer served:"; curl -s -o /dev/null -w '%{http_code}
+' --max-time 5 http://127.0.0.1:28090/atlas-media/install.sh
 `
 }
 

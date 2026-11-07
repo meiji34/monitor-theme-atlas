@@ -1,18 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Chart, type Series } from '../components/Chart'
+import { useMemo, useState } from 'react'
+import { Chart } from '../components/Chart'
 import { Flag } from '../components/Flag'
 import { MediaActions, MediaChecks } from '../components/Media'
 import { useMedia } from '../lib/useMedia'
 import { Rate } from '../components/Rate'
-import { fetchHistory } from '../lib/api'
 import { bytes, cycle, duration, expiry, money, pct, speed } from '../lib/format'
 import { t } from '../lib/i18n'
 import { DOWN, SERIES, UP } from '../lib/palette'
 import { Link } from '../lib/router'
-import type { History, MetricRow, Node } from '../lib/types'
+import type { Node } from '../lib/types'
+import { useHistory } from '../lib/useHistory'
 
 const WINDOWS = [1, 6, 24, 168, 720, 2160]
-const POINTS = 240
 
 const windowLabel = (h: number) => (h < 24 ? t('{n} 小時', { n: h }) : t('{n} 天', { n: Math.round(h / 24) }))
 
@@ -54,23 +53,6 @@ function Info({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-// Rows only exist for buckets that had data; insert nulls where the gap is
-// wider than one step so the chart shows the outage instead of bridging it.
-function withGaps(rows: MetricRow[], step: number) {
-  const out: (MetricRow | null)[] = []
-  const ts: number[] = []
-  rows.forEach((r, i) => {
-    const prev = rows[i - 1]
-    if (prev && r.ts - prev.ts > step * 1.5) {
-      out.push(null)
-      ts.push(prev.ts + step)
-    }
-    out.push(r)
-    ts.push(r.ts)
-  })
-  return { rows: out, ts }
-}
-
 export function NodeDetail({
   id,
   nodes,
@@ -89,46 +71,7 @@ export function NodeDetail({
     return [...WINDOWS.filter((h) => h * 1.25 <= whole), whole]
   }, [historyDays])
   const [hours, setHours] = useState(6)
-  const [hist, setHist] = useState<History | null>(null)
-  const [err, setErr] = useState<string | null>(null)
-
-  useEffect(() => {
-    const ctrl = new AbortController()
-    const load = () =>
-      fetchHistory(id, hours, POINTS, ctrl.signal).then(
-        (h) => {
-          setHist(h)
-          setErr(null)
-        },
-        (e) => {
-          if (!(e instanceof DOMException)) setErr((e as Error).message)
-        },
-      )
-    setHist(null)
-    load()
-    // Short windows keep moving; refresh them every minute.
-    const timer = hours <= 24 ? window.setInterval(() => !document.hidden && load(), 60000) : undefined
-    return () => {
-      ctrl.abort()
-      clearInterval(timer)
-    }
-  }, [id, hours])
-
-  const charts = useMemo(() => {
-    if (!hist) return null
-    const { rows, ts } = withGaps(hist.metrics ?? [], hist.step)
-    const pick = (f: (r: MetricRow) => number | undefined) => rows.map((r) => (r ? (f(r) ?? null) : null))
-
-    const probes = Object.entries(hist.probes ?? {})
-    const pingTs = [...new Set((hist.ping ?? []).map((p) => p.ts))].sort((a, b) => a - b)
-    const pingIndex = new Map(pingTs.map((t, i) => [t, i]))
-    const ping: Series[] = probes.map(([pid, name], k) => {
-      const vals: (number | null)[] = pingTs.map(() => null)
-      for (const p of hist.ping ?? []) if (String(p.task_id) === pid) vals[pingIndex.get(p.ts)!] = p.latency
-      return { name, color: SERIES[k] ?? '#94a3b8', values: vals }
-    })
-    return { ts, pick, pingTs, ping }
-  }, [hist])
+  const { hist, charts, err } = useHistory(id, hours)
 
   if (!node) {
     return (

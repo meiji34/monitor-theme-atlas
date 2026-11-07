@@ -20,6 +20,10 @@ export interface ThemeConfig {
   ping_lines: string
   offline_last: boolean
   notice: string
+  background_url: string
+  background_blur: number
+  background_dim: number
+  glass: boolean
   default_lang: 'auto' | 'zh-Hant' | 'zh-Hans' | 'en'
   color_scheme: 'system' | 'light' | 'dark'
 }

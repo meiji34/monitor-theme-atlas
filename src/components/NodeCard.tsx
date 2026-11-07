@@ -2,7 +2,7 @@ import { bytes, duration, expiry, pct, speed } from '../lib/format'
 import { coordText, type Place } from '../lib/geo'
 import { t } from '../lib/i18n'
 import { MediaCardLine } from './Media'
-import { Link, navigate } from '../lib/router'
+import { NodeLink, openNode } from '../lib/router'
 import type { Node, PingSeries } from '../lib/types'
 import { Flag } from './Flag'
 import { Meter, Sparkline } from './Meter'
@@ -56,16 +56,16 @@ export function NodeCard({
     <article
       onClick={(e) => {
         // The whole card opens the detail page; inner links/buttons handle themselves.
-        if (!(e.target as Element).closest('a,button')) navigate(`/node/${node.id}`)
+        if (!(e.target as Element).closest('a,button')) openNode(node.id)
       }}
       className={`panel lift flex cursor-pointer flex-col gap-4 p-4 ${node.online ? '' : 'opacity-70'}`}
     >
       <header className="flex items-start justify-between gap-3">
-        <Link to={`/node/${node.id}`} className="flex min-w-0 items-center gap-2 hover:text-primary">
+        <NodeLink id={node.id} className="flex min-w-0 items-center gap-2 hover:text-primary">
           <span className={`size-2 shrink-0 rounded-full ${node.online ? 'breathe bg-good' : 'bg-bad'}`} />
           <h3 className="truncate text-[17px] font-semibold">{node.name}</h3>
           <Flag code={node.country} />
-        </Link>
+        </NodeLink>
         <span className="flex shrink-0 items-center gap-1.5">
           {onFocus && (
             <button

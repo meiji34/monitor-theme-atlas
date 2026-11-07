@@ -106,7 +106,7 @@ export function TopNav({
   const active = route.view === 'node' ? null : route.view
   return (
     // Full width like the status bar at the bottom; the contents line up with the page.
-    <header className="sticky top-0 z-40 border-b border-line bg-card/85 backdrop-blur">
+    <header className="glass-bar sticky top-0 z-40 border-b border-line bg-card/85 backdrop-blur">
       <div className="page-w mx-auto flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:h-16 sm:flex-nowrap sm:gap-4 sm:px-6 sm:py-0">
         <Link to="/" className="flex items-center gap-3" title={siteName || 'Atlas'}>
           <Wordmark />

@@ -33,6 +33,10 @@ Your own data (routes, streaming snapshot) is keyed by the monitor hub's node id
   Links are blue and animated while every node on them is online, red and dashed otherwise. With no custom topology, the 中心節點 (or the first node) is linked to every other node.
 - Map mode, auto-rotation, lit countries, map labels, grey-out of cables no route rides, summary tiles, which latency probes the cards show, offline ordering, a notice line, and the switches for the optional extras.
 
+- **Background image** (背景圖片網址, blur, dimming): with one set, panels turn to frosted glass. Visitors can use their own picture instead (a URL, or an upload that stays in their browser), tune it, or switch it off in ⚙.
+
+Clicking a node in the cards, table or latency view opens its details in a dialog (resources, network and traffic, latency and loss, server info, with a time range); 「完整詳情」 opens the full page. Esc or Back closes it.
+
 The map zooms with Ctrl/⌘ + wheel or the +/− buttons, so plain scrolling still scrolls the page.
 
 ## Optional extras

@@ -178,7 +178,7 @@ export function StatusBar({ nodes, live }: { nodes: Node[]; live: 'ws' | 'poll' 
     new Date(),
   )
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card/90 backdrop-blur">
+    <div className="glass-bar fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card/90 backdrop-blur">
       <div className="page-w mx-auto flex flex-wrap items-center gap-x-5 gap-y-1 px-4 py-1.5 font-mono text-[12.5px] text-muted sm:px-6">
         <span className="flex items-center gap-1.5">
           <span className={`size-1.5 rounded-full ${live === 'ws' ? 'breathe bg-good' : 'bg-warn'}`} />

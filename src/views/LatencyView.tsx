@@ -2,7 +2,7 @@ import { Flag } from '../components/Flag'
 import { Sparkline } from '../components/Meter'
 import { latencyTone, pingLines } from '../components/NodeCard'
 import { t } from '../lib/i18n'
-import { Link } from '../lib/router'
+import { NodeLink } from '../lib/router'
 import type { Node, PingSeries } from '../lib/types'
 
 // Every node against every latency probe for the last hour.
@@ -30,11 +30,11 @@ export function LatencyView({ nodes, ping }: { nodes: Node[]; ping: Record<strin
             return (
               <tr key={n.id} className="border-b border-line/70 last:border-0">
                 <td className="px-4 py-3">
-                  <Link to={`/node/${n.id}`} className="flex items-center gap-2.5 hover:text-primary">
+                  <NodeLink id={n.id} className="flex items-center gap-2.5 hover:text-primary">
                     <span className={`size-2 shrink-0 rounded-full ${n.online ? 'breathe bg-good' : 'bg-bad'}`} />
                     <Flag code={n.country} className="h-3.5 w-5" />
                     <span className="truncate text-[16px] font-semibold">{n.name}</span>
-                  </Link>
+                  </NodeLink>
                 </td>
                 {probes.map((p) => {
                   const l = lines.find((x) => x.name === p)

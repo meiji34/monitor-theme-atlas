@@ -69,9 +69,56 @@ body {
   background-size: 48px 48px;
 }
 
+/* A background picture (components/Backdrop) sits behind the page: the
+   graticule goes, and with glass on the panels turn to frosted glass. */
+:root[data-backdrop],
+:root[data-backdrop] body {
+  background-image: none;
+}
+:root[data-backdrop] body {
+  background-color: transparent;
+}
+:root[data-glass] {
+  --glass-tint: color-mix(in srgb, var(--color-card) 62%, transparent);
+  --glass-edge: color-mix(in srgb, var(--color-fg) 14%, transparent);
+}
+:root[data-glass] .panel,
+:root[data-glass] .glass {
+  background: var(--glass-tint);
+  border-color: var(--glass-edge);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+    0 10px 30px -18px rgb(0 0 0 / 0.55);
+}
+/* Bars and inputs that sit on the page itself. */
+:root[data-glass] .glass-bar {
+  background: color-mix(in srgb, var(--color-card) 55%, transparent) !important;
+  border-color: var(--glass-edge) !important;
+}
+:root[data-glass] .bg-card {
+  background-color: color-mix(in srgb, var(--color-card) 70%, transparent);
+}
+:root[data-glass] .panel .bg-bg {
+  background-color: color-mix(in srgb, var(--color-bg) 55%, transparent);
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-glass] .panel,
+  :root[data-glass] .glass {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+/* The dialog takes focus when it opens; that isn't worth a ring. */
+[role='dialog']:focus-visible {
+  outline: none;
 }
 
 /* Component classes live in the components layer so Tailwind utilities

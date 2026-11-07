@@ -87,6 +87,30 @@ as root:
    script adds `media-check.service.d/container.conf`: started as root without
    the sandboxing, dropping to `monitor-agent` through `runuser`.
 
-A node added later: give it a token in `relay.local.json`, rebuild and reinstall
-the hub script (it rewrites `tokens.json` and restarts the relay), then run
-that node's script.
+### A node added later: one line
+
+Once the node is in the hub and its monitor agent runs (the probes run as the
+agent's `monitor-agent` user), issue a one-time code on the hub:
+
+```bash
+sudo python3 /opt/media-relay/media-relay.py enroll <hub node id or name> https://<hub>
+```
+
+It prints the command to run on the new node as root:
+
+```bash
+curl -fsSL https://<hub>/atlas-media/install.sh | sh -s -- <code>
+```
+
+The code works once and for 24 hours. The node trades it for its own token
+(the relay keeps only its SHA-256, in its state directory), downloads the
+probes from the relay itself (no GitHub), picks systemd, the container
+fallback or busybox cron as above, and runs the first check. Its route is
+traced from the source node within minutes, at the address it polls from,
+placed with ip-api. `… | sh -s -- --uninstall` removes it again. Running the
+command with a new code re-enrolls a node (its old token stops working).
+
+| Request | Who | Does |
+|---|---|---|
+| `GET /atlas-media/install.sh`, `/atlas-media/files/<name>` | anyone | the node installer and the probe files (no secrets) |
+| `POST /atlas-media/enroll` | the code as the body | `{node, token}` once; 403 for a wrong, used or expired code |
