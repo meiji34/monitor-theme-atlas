@@ -117,7 +117,8 @@ body {
   outline-offset: 2px;
 }
 /* The dialog takes focus when it opens; that isn't worth a ring. */
-[role='dialog']:focus-visible {
+[role='dialog']:focus-visible,
+[role='listbox']:focus-visible {
   outline: none;
 }
 

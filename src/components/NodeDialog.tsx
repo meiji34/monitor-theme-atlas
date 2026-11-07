@@ -7,6 +7,7 @@ import type { Node, PingSeries } from '../lib/types'
 import { useHistory } from '../lib/useHistory'
 import { useMedia } from '../lib/useMedia'
 import { Chart } from './Chart'
+import { Dropdown } from './Dropdown'
 import { Flag } from './Flag'
 import { MediaActions, MediaChecks } from './Media'
 import { Rate } from './Rate'
@@ -176,18 +177,14 @@ export function NodeDialog({
               ))}
             </div>
             {tab !== 'info' && (
-              <select
+              <Dropdown
                 value={hours}
-                onChange={(e) => setHours(Number(e.target.value))}
-                aria-label={t('時間範圍')}
-                className="rounded-lg border border-line bg-bg/60 px-2 py-1.5 text-[13.5px] outline-none focus:border-primary/60"
-              >
-                {ranges.map((h) => (
-                  <option key={h} value={h}>
-                    {rangeLabel(h)}
-                  </option>
-                ))}
-              </select>
+                onChange={setHours}
+                label={t('時間範圍')}
+                align="end"
+                className="px-2.5 py-1.5 text-[13.5px]"
+                options={ranges.map((h) => ({ value: h, label: rangeLabel(h) }))}
+              />
             )}
           </div>
         </div>

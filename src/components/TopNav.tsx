@@ -1,4 +1,5 @@
 import { LANGS, t, type Lang } from '../lib/i18n'
+import { Dropdown } from './Dropdown'
 import { href, Link, type Route } from '../lib/router'
 import { useDark } from '../lib/scheme'
 import { AdminButton, FullscreenButton, SchemeButton, SettingsMenu, type VisitorSettings } from './Settings'
@@ -66,24 +67,22 @@ export function Wordmark({ className = '' }: { className?: string }) {
 
 function LangPicker({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
   return (
-    <label className="relative hidden items-center rounded-lg sm:flex border border-line bg-card text-muted hover:border-primary/40 hover:text-fg">
-      <span className="sr-only">{t('語言')}</span>
-      <svg viewBox="0 0 16 16" className="pointer-events-none absolute left-2 size-3.5" fill="none" stroke="currentColor" strokeWidth="1.3">
-        <circle cx="8" cy="8" r="6" />
-        <path d="M2 8h12M8 2c1.8 1.8 2.6 3.8 2.6 6S9.8 12.2 8 14C6.2 12.2 5.4 10.2 5.4 8S6.2 3.8 8 2Z" />
-      </svg>
-      <select
+    <span className="hidden sm:inline-flex">
+      <Dropdown
         value={lang}
-        onChange={(e) => onChange(e.target.value as Lang)}
-        className="cursor-pointer appearance-none bg-transparent py-1.5 pr-2.5 pl-7 text-[13px] font-medium outline-none"
-      >
-        {LANGS.map((l) => (
-          <option key={l.id} value={l.id}>
-            {l.short}
-          </option>
-        ))}
-      </select>
-    </label>
+        onChange={onChange}
+        label={t('語言')}
+        align="end"
+        className="h-9 px-2.5"
+        options={LANGS.map((l) => ({ value: l.id, label: l.short }))}
+        icon={
+          <svg viewBox="0 0 16 16" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.3">
+            <circle cx="8" cy="8" r="6" />
+            <path d="M2 8h12M8 2c1.8 1.8 2.6 3.8 2.6 6S9.8 12.2 8 14C6.2 12.2 5.4 10.2 5.4 8S6.2 3.8 8 2Z" />
+          </svg>
+        }
+      />
+    </span>
   )
 }
 

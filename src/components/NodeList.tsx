@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Dropdown } from './Dropdown'
 import { compactRate, duration, pct } from '../lib/format'
 import { locale, t } from '../lib/i18n'
 import type { Node } from '../lib/types'
@@ -136,18 +137,14 @@ export function NodeList({ nodes: all, onFocus }: { nodes: Node[]; onFocus: (n: 
               className="min-w-0 flex-1 bg-transparent py-1.5 text-[13.5px] outline-none placeholder:text-muted"
             />
           </label>
-          <select
+          <Dropdown
             value={sort}
-            onChange={(e) => setSort(e.target.value as Sort)}
-            title={t('排序')}
-            className="rounded-lg border border-line bg-card px-2 text-[13px] text-muted outline-none focus:border-primary/50"
-          >
-            {SORTS.map((s) => (
-              <option key={s.key} value={s.key}>
-                {t(s.label)}
-              </option>
-            ))}
-          </select>
+            onChange={setSort}
+            label={t('排序')}
+            align="end"
+            className="h-full px-2.5"
+            options={SORTS.map((s) => ({ value: s.key, label: t(s.label) }))}
+          />
         </div>
         {groups.length > 0 && (
           <div className="flex gap-1.5 overflow-x-auto pb-0.5">
