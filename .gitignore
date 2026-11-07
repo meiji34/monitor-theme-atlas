@@ -46,3 +46,7 @@ skills-lock.json
 
 # packaged release for Komari
 atlas-komari.zip
+
+# Your own banner pictures (theme setting 橫幅圖片: name | /hero/<file>):
+# bundled into your build only, never into the repository or the public release.
+public/hero/

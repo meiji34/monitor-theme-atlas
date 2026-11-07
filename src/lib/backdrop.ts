@@ -11,10 +11,19 @@ export interface Backdrop {
   blur: number // px, 0–30
   dim: number // %, 0–90
   glass: boolean // panels as frosted glass (only with an image)
+  glassBlur: number // px the glass blurs what's behind it, 0–40
+  glassOpacity: number // %, how solid the glass is: 10 clear … 95 nearly opaque
   own: boolean // the visitor's own image rather than the site's
 }
 
-const K = { url: 'atlas:bg', blur: 'atlas:bg-blur', dim: 'atlas:bg-dim', glass: 'atlas:glass' }
+const K = {
+  url: 'atlas:bg',
+  blur: 'atlas:bg-blur',
+  dim: 'atlas:bg-dim',
+  glass: 'atlas:glass',
+  glassBlur: 'atlas:glass-blur',
+  glassOpacity: 'atlas:glass-opacity',
+}
 const NONE = 'none' // stored when a visitor turns the site's image off
 
 function read(key: string): string | null {
@@ -58,6 +67,8 @@ export interface SiteBackdrop {
   background_blur: number
   background_dim: number
   glass: boolean
+  glass_blur: number
+  glass_opacity: number
 }
 
 export interface BackdropCtl {
@@ -69,6 +80,8 @@ export interface BackdropCtl {
   setBlur: (v: number) => void
   setDim: (v: number) => void
   setGlass: (v: boolean) => void
+  setGlassBlur: (v: number) => void
+  setGlassOpacity: (v: number) => void
   reset: () => void
 }
 
@@ -103,6 +116,8 @@ export function useBackdrop(site: SiteBackdrop): BackdropCtl {
     dim: num(read(K.dim), site.background_dim, 0, 90),
     glass: !!url && (glassPref === null ? site.glass !== false : glassPref === 'on'),
     own: !!own,
+    glassBlur: num(read(K.glassBlur), site.glass_blur ?? 18, 0, 40),
+    glassOpacity: num(read(K.glassOpacity), site.glass_opacity ?? 62, 10, 95),
   }
 
   // Glass panels and the transparent page are driven from <html>.
@@ -113,6 +128,12 @@ export function useBackdrop(site: SiteBackdrop): BackdropCtl {
     if (bd.glass) root.dataset.glass = ''
     else delete root.dataset.glass
   }, [bd.url, bd.glass])
+  // The glass's own blur and tint, read by the .panel rules in index.css.
+  useEffect(() => {
+    const st = document.documentElement.style
+    st.setProperty('--glass-blur', `${bd.glassBlur}px`)
+    st.setProperty('--glass-alpha', `${bd.glassOpacity}%`)
+  }, [bd.glassBlur, bd.glassOpacity])
 
   return {
     bd,
@@ -149,6 +170,14 @@ export function useBackdrop(site: SiteBackdrop): BackdropCtl {
     },
     setGlass: (v) => {
       write(K.glass, v ? 'on' : 'off')
+      refresh()
+    },
+    setGlassBlur: (v) => {
+      write(K.glassBlur, String(clamp(v, 0, 40)))
+      refresh()
+    },
+    setGlassOpacity: (v) => {
+      write(K.glassOpacity, String(clamp(v, 10, 95)))
       refresh()
     },
     reset: () => {

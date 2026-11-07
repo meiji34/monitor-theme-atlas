@@ -4,6 +4,13 @@ import { fetchThemeConfig } from './api'
 
 export interface ThemeConfig {
   show_map: boolean
+  show_hero: boolean
+  hero_eyebrow: string
+  hero_title: string
+  hero_subtitle: string
+  hero_images: string
+  hero_rotate: number
+  hero_avatar: string
   map_mode: 'globe' | 'flat'
   globe_autorotate: boolean
   light_countries: boolean
@@ -24,6 +31,8 @@ export interface ThemeConfig {
   background_blur: number
   background_dim: number
   glass: boolean
+  glass_blur: number
+  glass_opacity: number
   default_lang: 'auto' | 'zh-Hant' | 'zh-Hans' | 'en'
   color_scheme: 'system' | 'light' | 'dark'
 }

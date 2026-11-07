@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Backdrop } from './components/Backdrop'
+import { Hero, parseHeroImages } from './components/Hero'
 import { MapView, type MapPoint } from './components/MapView'
 import { NodeCard, pingLines } from './components/NodeCard'
 import { NodeDialog } from './components/NodeDialog'
@@ -133,6 +134,7 @@ export default function App() {
       [n.name, n.group, n.country, n.arch, n.virt].filter(Boolean).some((s) => s!.toLowerCase().includes(query.toLowerCase())),
   )
 
+  const heroImages = useMemo(() => parseHeroImages(cfg.hero_images), [cfg.hero_images])
   const overrides = useMemo(() => parseLocations(cfg.locations), [cfg.locations])
   const places = useMemo(() => {
     const m = new Map<string, Place>()
@@ -384,6 +386,18 @@ export default function App() {
               </div>
             )}
 
+            {cfg.show_hero && loaded && route.view === 'overview' && (
+              <Hero
+                eyebrow={cfg.hero_eyebrow}
+                title={cfg.hero_title || (me.site_name && me.site_name !== 'Monitor' ? me.site_name : 'Atlas')}
+                subtitle={cfg.hero_subtitle}
+                images={heroImages}
+                rotate={cfg.hero_rotate}
+                avatar={cfg.hero_avatar}
+                online={sorted.filter((n) => n.online).length}
+                total={sorted.length}
+              />
+            )}
             {body}
 
             <StatusBar nodes={sorted} live={liveMode} />

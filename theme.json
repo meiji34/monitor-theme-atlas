@@ -2,10 +2,24 @@
   "name": "Atlas",
   "short": "atlas",
   "description": "海圖風格的地球／平面地圖、節點拓撲、真實路由與流媒體檢測，支援深色與三種語言",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "author": "yddsfj",
   "url": "https://github.com/meiji34/monitor-theme-atlas",
   "config": [
+    { "type": "title", "label": "橫幅" },
+    { "key": "show_hero", "type": "boolean", "label": "總覽頁顯示頂部橫幅", "default": true },
+    { "key": "hero_eyebrow", "type": "string", "label": "橫幅小標", "default": "ATLAS · LIVE VIEW" },
+    { "key": "hero_title", "type": "string", "label": "橫幅大標題", "default": "", "help": "留空則用網站名稱" },
+    { "key": "hero_subtitle", "type": "string", "label": "橫幅副標題", "default": "" },
+    {
+      "key": "hero_images",
+      "type": "text",
+      "label": "橫幅圖片",
+      "default": "",
+      "help": "每行一張：名稱 | 圖片網址 | 焦點（選填），順序就是切換順序。網址可用 https:// 或打包在主題裡的 /hero/檔名。焦點是圖中一定要完整露出的位置（例如臉），寫成「橫向% 縱向%」，如 46% 20%，預設 50% 35%。圖片鋪滿橫幅，橫幅高度隨寬度等比例變化。留空則是純色玻璃框。訪客可用右下角的按鈕切換，各自記住看到第幾張"
+    },
+    { "key": "hero_rotate", "type": "number", "label": "橫幅自動輪換（秒）", "default": 0, "min": 0, "max": 3600, "help": "0 為不自動輪換；滑鼠停在橫幅上時暫停" },
+    { "key": "hero_avatar", "type": "string", "label": "橫幅右上角頭像網址", "default": "", "help": "選填，https:// 圖片網址；手機上不顯示" },
     { "type": "title", "label": "地圖" },
     { "key": "show_map", "type": "boolean", "label": "顯示地圖", "default": true },
     {
@@ -109,6 +123,8 @@
     { "key": "background_blur", "type": "number", "label": "背景模糊（px）", "default": 6, "min": 0, "max": 30 },
     { "key": "background_dim", "type": "number", "label": "背景壓暗（%）", "default": 35, "min": 0, "max": 90, "help": "以頁面底色蓋在圖片上，數值越高文字越清楚" },
     { "key": "glass", "type": "boolean", "label": "有背景圖時使用毛玻璃面板", "default": true },
+    { "key": "glass_blur", "type": "number", "label": "毛玻璃模糊（px）", "default": 18, "min": 0, "max": 40, "help": "面板後方的模糊程度，0 為完全清晰" },
+    { "key": "glass_opacity", "type": "number", "label": "毛玻璃不透明度（%）", "default": 62, "min": 10, "max": 95, "help": "面板底色的濃度：越低越透明、越能看見背景，越高文字越清楚" },
     {
       "key": "default_lang",
       "type": "select",

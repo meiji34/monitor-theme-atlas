@@ -63,7 +63,7 @@ function Switch({ on, onChange, disabled }: { on: boolean; onChange: (v: boolean
 function Slider({ label, value, min, max, unit, onChange }: { label: string; value: number; min: number; max: number; unit: string; onChange: (v: number) => void }) {
   return (
     <label className="flex items-center gap-3 py-1 text-[13px]">
-      <span className="w-14 shrink-0 text-muted">{label}</span>
+      <span className="w-16 shrink-0 text-muted">{label}</span>
       <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="min-w-0 flex-1 accent-primary" />
       <span className="w-12 shrink-0 text-right font-mono">
         {value}
@@ -153,6 +153,12 @@ function BackgroundSection({ b }: { b: BackdropCtl }) {
             <span className="text-[13px] text-muted">{t('毛玻璃面板')}</span>
             <Switch on={b.bd.glass} onChange={b.setGlass} />
           </div>
+          {b.bd.glass && (
+            <>
+              <Slider label={t('玻璃模糊')} value={b.bd.glassBlur} min={0} max={40} unit="px" onChange={b.setGlassBlur} />
+              <Slider label={t('不透明度')} value={b.bd.glassOpacity} min={10} max={95} unit="%" onChange={b.setGlassOpacity} />
+            </>
+          )}
         </div>
       )}
       <p className="mt-1 text-[11.5px] text-muted">{t('上傳的圖片只存在這個瀏覽器，不會傳到伺服器')}</p>
