@@ -12,9 +12,9 @@
 
 在後台「主題」頁用本倉庫網址安裝（hub 會抓最新 Release 裡的 `theme.tar.gz`），或從 Releases 下載 `theme.tar.gz` 上傳。
 
-### Komari
+### Komari（已暫停）
 
-同一個主題也能裝在 [Komari](https://github.com/komari-monitor/komari)（1.6 以上）：從 Releases 下載 `atlas-komari.zip`，在 Komari 後台的主題設定上傳即可，設定項目會出現在 Komari 的主題設定頁。資料來自 Komari 的公開 API；延遲顯示 Komari 的 Ping 任務，流量欄顯示 Komari 的流量計數。拓撲與位置設定請用節點名稱（或 `#uuid`）。
+Komari 版已暫停開發、不再發布，以下程式碼僅留作參考。同一個主題也能裝在 [Komari](https://github.com/komari-monitor/komari)（1.6 以上）：從 Releases 下載 `atlas-komari.zip`，在 Komari 後台的主題設定上傳即可，設定項目會出現在 Komari 的主題設定頁。資料來自 Komari 的公開 API；延遲顯示 Komari 的 Ping 任務，流量欄顯示 Komari 的流量計數。拓撲與位置設定請用節點名稱（或 `#uuid`）。
 
 自己的路由、流媒體快照是以 monitor 的節點 ID 記錄的：執行 `node scripts/komari-ids.mjs` 依名稱對應兩邊的節點、寫出 `src/data/ids.json`，再 `npm run pack:komari` 打包。`npm run dev:komari` 會轉發到 `.env.local` 的 `KOMARI_HUB`。即時 relay（`relay/`）是為 monitor 寫的，在 Komari 上主題會改用打包內建的快照。
 

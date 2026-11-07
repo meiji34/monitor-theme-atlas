@@ -12,9 +12,9 @@ The theme works on any hub as it is. Three extras are **optional** and need a li
 
 In the hub: 主題 → install from a repository, using this repository's URL (the hub fetches `theme.tar.gz` from the latest release). Or download `theme.tar.gz` from Releases and upload it on the 主題 page.
 
-### Komari
+### Komari (paused)
 
-The same theme runs on [Komari](https://github.com/komari-monitor/komari) (1.6 or later): download `atlas-komari.zip` from Releases and upload it in Komari's admin → 主題設定. Settings appear on Komari's theme settings page. Live data comes from Komari's public API (`/api/nodes`, `/api/rpc2` `common:getNodesLatestStatus`, `/api/records/load` and `/api/records/ping`); Komari's ping tasks show as the latency probes, and the traffic column shows Komari's traffic counter. Topology and location lines take node names (or `#<uuid>`).
+Komari support is paused and no longer released; the code below stays for reference. The same theme runs on [Komari](https://github.com/komari-monitor/komari) (1.6 or later): download `atlas-komari.zip` from Releases and upload it in Komari's admin → 主題設定. Settings appear on Komari's theme settings page. Live data comes from Komari's public API (`/api/nodes`, `/api/rpc2` `common:getNodesLatestStatus`, `/api/records/load` and `/api/records/ping`); Komari's ping tasks show as the latency probes, and the traffic column shows Komari's traffic counter. Topology and location lines take node names (or `#<uuid>`).
 
 Your own data (routes, streaming snapshot) is keyed by the monitor hub's node ids; `node scripts/komari-ids.mjs` matches both hubs' nodes by name and writes `src/data/ids.json`, then `npm run pack:komari` builds `atlas-komari.zip` with it. `npm run dev:komari` proxies to `KOMARI_HUB` from `.env.local`. The live relay (`relay/`) is written for the monitor hub; on Komari the theme falls back to the bundled snapshots.
 
