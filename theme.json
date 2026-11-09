@@ -2,7 +2,7 @@
   "name": "Atlas",
   "short": "atlas",
   "description": "海圖風格的地球／平面地圖、節點拓撲、真實路由與流媒體檢測，支援深色與三種語言",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "author": "yddsfj",
   "url": "https://github.com/meiji34/monitor-theme-atlas",
   "config": [
@@ -20,6 +20,15 @@
     },
     { "key": "hero_rotate", "type": "number", "label": "橫幅自動輪換（秒）", "default": 0, "min": 0, "max": 3600, "help": "0 為不自動輪換；滑鼠停在橫幅上時暫停" },
     { "key": "hero_avatar", "type": "string", "label": "橫幅右上角頭像網址", "default": "", "help": "選填，https:// 圖片網址；手機上不顯示" },
+    { "key": "show_hero_value", "type": "boolean", "label": "橫幅顯示伺服器總價值", "default": true, "help": "狀態列加上全部節點一年的費用：各節點價格依計費週期換算成一年（一次性付款不計）再加總" },
+    { "key": "value_currency", "type": "string", "label": "總價值幣別", "default": "USD", "help": "ISO 幣別代碼，如 USD、CNY、HKD、EUR" },
+    {
+      "key": "value_rates",
+      "type": "text",
+      "label": "總價值匯率",
+      "default": "",
+      "help": "每行一個：幣別 = 匯率，表示 1 單位該幣別等於多少總價值幣別，例如 CNY = 0.14。與總價值幣別相同的不用填；沒填匯率的幣別不計入，滑鼠移到總價值上會列出"
+    },
     { "type": "title", "label": "地圖" },
     { "key": "show_map", "type": "boolean", "label": "顯示地圖", "default": true },
     {

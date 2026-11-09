@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Backdrop } from './components/Backdrop'
 import { Hero, parseHeroImages } from './components/Hero'
+import { fleetValue, parseRates } from './lib/value'
 import { MapView, type MapPoint } from './components/MapView'
 import { NodeCard, pingLines } from './components/NodeCard'
 import { NodeDialog } from './components/NodeDialog'
@@ -135,6 +136,11 @@ export default function App() {
   )
 
   const heroImages = useMemo(() => parseHeroImages(cfg.hero_images), [cfg.hero_images])
+  const rates = useMemo(() => parseRates(cfg.value_rates), [cfg.value_rates])
+  const value = useMemo(
+    () => (cfg.show_hero_value ? fleetValue(sorted, cfg.value_currency, rates) : undefined),
+    [cfg.show_hero_value, cfg.value_currency, rates, sorted],
+  )
   const overrides = useMemo(() => parseLocations(cfg.locations), [cfg.locations])
   const places = useMemo(() => {
     const m = new Map<string, Place>()
@@ -396,6 +402,7 @@ export default function App() {
                 avatar={cfg.hero_avatar}
                 online={sorted.filter((n) => n.online).length}
                 total={sorted.length}
+                value={value}
               />
             )}
             {body}

@@ -11,6 +11,9 @@ export interface ThemeConfig {
   hero_images: string
   hero_rotate: number
   hero_avatar: string
+  show_hero_value: boolean
+  value_currency: string
+  value_rates: string
   map_mode: 'globe' | 'flat'
   globe_autorotate: boolean
   light_countries: boolean

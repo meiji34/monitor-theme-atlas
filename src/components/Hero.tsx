@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import manifest from '../../theme.json'
 import { safeImageUrl } from '../lib/backdrop'
+import { money } from '../lib/format'
 import { locale, t } from '../lib/i18n'
+import type { FleetValue } from '../lib/value'
 
 export interface HeroImage {
   name: string
@@ -67,6 +69,7 @@ export function Hero({
   avatar,
   online,
   total,
+  value,
 }: {
   eyebrow: string
   title: string
@@ -76,6 +79,7 @@ export function Hero({
   avatar: string
   online: number
   total: number
+  value?: FleetValue // yearly cost of the fleet; omitted when switched off
 }) {
   const [index, setIndex] = useState(readIndex)
   const [failed, setFailed] = useState<Set<string>>(new Set())
@@ -169,6 +173,22 @@ export function Hero({
               </span>
               {t('{n} / {total} 台伺服器在線', { n: online, total })}
             </span>
+            {value && value.priced > 0 && (
+              <>
+                <span className="h-3 w-px bg-line" />
+                <span
+                  className="font-mono text-fg"
+                  title={
+                    value.missing.length
+                      ? t('未計入（沒有匯率）：{list}', { list: value.missing.join(', ') })
+                      : t('{n} 台有標價的伺服器，依計費週期換算成一年', { n: value.priced })
+                  }
+                >
+                  {t('總價值 {amount} / 年', { amount: money(value.amount, value.currency) })}
+                  {value.missing.length > 0 && <span className="text-warn"> *</span>}
+                </span>
+              </>
+            )}
             <span className="h-3 w-px bg-line" />
             <span className="font-mono">{date}</span>
             <span className="hidden h-3 w-px bg-line sm:block" />
