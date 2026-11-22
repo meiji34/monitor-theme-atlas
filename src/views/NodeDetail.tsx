@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Chart } from '../components/Chart'
+import { CnLinesSection } from '../components/CnLines'
 import { Flag } from '../components/Flag'
 import { MediaActions, MediaChecks } from '../components/Media'
 import { useMedia } from '../lib/useMedia'
@@ -9,7 +10,11 @@ import { t } from '../lib/i18n'
 import { DOWN, SERIES, UP } from '../lib/palette'
 import { Link } from '../lib/router'
 import type { Node } from '../lib/types'
+import { cnTarget, useCnLines } from '../lib/cnlines'
 import { useHistory } from '../lib/useHistory'
+
+// Stands in for a node that isn't there, so hooks run in the same order.
+const EMPTY: Node = { id: '', name: '', online: false, metrics: null }
 
 const WINDOWS = [1, 6, 24, 168, 720, 2160]
 
@@ -66,6 +71,7 @@ export function NodeDetail({
 }) {
   const node = nodes.find((n) => n.id === id)
   const media = useMedia()
+  const cn = useCnLines(node ?? EMPTY)
   const windows = useMemo(() => {
     const whole = historyDays * 24
     return [...WINDOWS.filter((h) => h * 1.25 <= whole), whole]
@@ -158,6 +164,16 @@ export function NodeDetail({
           <Info label={t('本月已用')} value={bytes(node.month_used)} />
         </div>
       </div>
+
+      {cn.length > 0 && node && (
+        <div className="panel p-4">
+          <div className="mb-3 flex items-baseline justify-between gap-2">
+            <span className="hud text-fg!">{t('三網回程')}</span>
+            <span className="text-[13px] text-muted">{cnTarget()}</span>
+          </div>
+          <CnLinesSection node={node} wide />
+        </div>
+      )}
 
       {showMedia && media.available && (
         <div className="panel p-4">

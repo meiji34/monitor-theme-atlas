@@ -8,7 +8,7 @@
 
 A theme for the [monitor](https://monitor-document.pages.dev/) server probe: a globe / flat world map with the nodes lit on it, a node topology drawn as arches, node cards, a table, latency charts and detail pages. Light or dark; Traditional Chinese, Simplified Chinese or English.
 
-The theme works on any hub as it is. Three extras are **optional** and need a little setup on your side, because they run on your servers rather than in the browser: [real routes](#real-routes), a [submarine cable map](#submarine-cable-map) and [streaming checks](#streaming-checks). Without them the theme simply doesn't show those parts.
+The theme works on any hub as it is. Four extras are **optional** and need a little setup on your side, because they run on your servers rather than in the browser: [real routes](#real-routes), a [submarine cable map](#submarine-cable-map) , [streaming checks](#streaming-checks) and the [return path to China](#return-path-to-china). Without them the theme simply doesn't show those parts.
 
 ## Install
 
@@ -51,6 +51,7 @@ The map zooms with Ctrl/⌘ + wheel or the +/− buttons, so plain scrolling sti
 | Real routes | each topology link along the path packets take, coloured by network (AS) | SSH to one node with `mtr`; Node.js locally; build your own package |
 | Submarine cable map | sea crossings along cables, a cable base map | the TeleGeography 2022 snapshot (non-commercial licence) |
 | Streaming checks | Netflix / Disney+ / ChatGPT … per node | a snapshot over SSH, or the live relay on the hub |
+| Return path to China | the line each node takes back to China Telecom / Unicom / Mobile (CN2 GIA, 9929, CMI …) | a snapshot over SSH, or typed into the settings |
 
 Real routes and snapshot streaming checks are baked into **your own build**: generate the data, then `npm run pack` and upload that `theme.tar.gz` to your hub. The data lands in `src/data/` and `scripts/data/`, which are git-ignored and never part of the public release.
 
@@ -103,6 +104,23 @@ Node details, the sidebar and the node cards show whether streaming and AI servi
 - **Live**, with the relay from [`relay/`](relay/README.md) next to the hub: results come from it, nodes re-check once a day on their own, and a logged-in admin gets "Check now" / "Check again" buttons; a request is picked up within a minute. This works with the public release too, no rebuild needed: the theme looks for the relay at `/atlas-media/` and uses it when it answers.
 
 Without either, the section isn't shown. Bahamut Anime Crazy isn't included: it answers scripted requests with a 403 whatever the region. TikTok sometimes serves a challenge page to datacenter addresses, shown as "Unknown".
+
+### Return path to China
+
+Cards, the table, node details and the map's side panel mark the line each node's traffic takes back to the three Chinese carriers. **Optimised lines** wear an amber tint and a medal: CN2 GIA, CTG GIA / CTG, 9929, CUG (10099), CMIN2. **Standard lines** keep the panel's own quiet tint: 163, CN2 GT, 4837, CMI, CMNET. The details also list the networks crossed and where the answer came from.
+
+- **Snapshot**: each node traces to China Telecom, Unicom and Mobile in Fujian (the same addresses as the hub's Fujian latency tasks, TCP port 80); the line follows from the backbones the path crosses. Bundled into your own package:
+  ```bash
+  node scripts/china-lines.mjs                # nodes in routes.local.json with an ssh alias
+  node scripts/china-lines.mjs 2 5            # only these, merged into the existing data
+  node scripts/china-lines.mjs 12=jp-tokyo    # a node not in routes.local.json: hub id=ssh alias
+  node scripts/china-lines.mjs --reclassify   # no tracing: decide the saved paths again
+  npm run pack
+  ```
+  Nothing is installed on the nodes; the script uses what's there: `traceroute -T -p 80` as root, else `mtr`, busybox `traceroute -I`, UDP `traceroute`, or TTL-limited `ping`. The rules: 59.43 (AS4809) without 202.97 is CN2 GIA, with it CN2 GT, and via CTGNet (AS23764) abroad CTG GIA; AS9929 is 9929, AS10099 CUG; AS58807 is CMIN2, AS58453 CMI; only the 163, 4837 or CMNET backbones mean a standard line. When the handover into the carrier isn't seen (routers silent all the way to the destination) the line is unknown and not shown. Other routers' networks come from ip-api.com; the output holds AS numbers and line names only, no addresses.
+- **By hand** (`cn_lines`): one `name or #id = CT CN2 GIA, CU 9929, CM CMI` per line (the carriers' Chinese names work too); it wins over the snapshot. A carrier can be left out, and `-` hides it. `show_cn_lines` turns the whole thing off.
+
+Traceroute sees one direction only, and return paths change over time and with the hour.
 
 ## Language and appearance
 

@@ -2,7 +2,7 @@
   "name": "Atlas",
   "short": "atlas",
   "description": "海圖風格的地球／平面地圖、節點拓撲、真實路由與流媒體檢測，支援深色與三種語言",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "author": "yddsfj",
   "url": "https://github.com/meiji34/monitor-theme-atlas",
   "config": [
@@ -120,6 +120,21 @@
       "help": "每行一個延遲監控名稱，留空則顯示前 3 項"
     },
     { "key": "offline_last", "type": "boolean", "label": "離線節點排在最後", "default": true },
+    { "type": "title", "label": "三網回程" },
+    {
+      "key": "show_cn_lines",
+      "type": "boolean",
+      "label": "顯示三網回程線路",
+      "default": true,
+      "help": "在卡片、表格與節點詳情標示各節點回中國電信、聯通、移動走的線路。CN2 GIA、CTG、9929、CUG（10099）、CMIN2 以橘色標為優化線路，163、CN2 GT、4837、CMI、CMNET 為普通線路。資料來自打包時內建的追蹤快照（scripts/china-lines.mjs，追到福建三網）和下方的手動設定；兩者都沒有的節點不顯示"
+    },
+    {
+      "key": "cn_lines",
+      "type": "text",
+      "label": "手動指定三網線路",
+      "default": "",
+      "help": "每行一筆：節點名稱或 #ID = 電信 線路, 聯通 線路, 移動 線路，例：#5 = 電信 CN2 GIA, 聯通 9929, 移動 CMI。寫了的會蓋過自動追蹤的結果；只寫其中一網也可以，寫 - 則不顯示該網。電信／聯通／移動也可寫成 CT／CU／CM"
+    },
     { "type": "title", "label": "網站" },
     { "key": "notice", "type": "string", "label": "公告", "default": "", "help": "顯示在頁面頂部的一行純文字，留空則不顯示" },
     {

@@ -17,6 +17,7 @@ import { hasCables } from './lib/cables'
 import { MediaContext, useMediaProvider } from './lib/useMedia'
 import { RoutesContext, useRoutesProvider } from './lib/useRoutes'
 import { useBackdrop } from './lib/backdrop'
+import { CnLinesContext, cnLinesFor, parseCnLines } from './lib/cnlines'
 import { useThemeConfig } from './lib/config'
 import { hubTopology, locate, parseLocations, parseTopology, type LngLat, type Place } from './lib/geo'
 import { useLiveNodes, usePingSeries } from './lib/live'
@@ -135,6 +136,10 @@ export default function App() {
       [n.name, n.group, n.country, n.arch, n.virt].filter(Boolean).some((s) => s!.toLowerCase().includes(query.toLowerCase())),
   )
 
+  const cnLines = useMemo(() => {
+    const own = parseCnLines(cfg.cn_lines)
+    return cfg.show_cn_lines ? (n: Node) => cnLinesFor(n, own) : () => []
+  }, [cfg.cn_lines, cfg.show_cn_lines])
   const heroImages = useMemo(() => parseHeroImages(cfg.hero_images), [cfg.hero_images])
   const rates = useMemo(() => parseRates(cfg.value_rates), [cfg.value_rates])
   const value = useMemo(
@@ -373,6 +378,7 @@ export default function App() {
     <DarkContext.Provider value={dark}>
       <MediaContext.Provider value={media}>
         <RoutesContext.Provider value={liveRoutes}>
+          <CnLinesContext.Provider value={cnLines}>
           <Backdrop bd={backdrop.bd} />
           <TopNav
             settings={settings}
@@ -412,6 +418,7 @@ export default function App() {
           {dialog && (
             <NodeDialog key={dialog.id} node={dialog} ping={ping[dialog.id]} historyDays={me.history_days ?? 30} showMedia={cfg.show_media} />
           )}
+          </CnLinesContext.Provider>
         </RoutesContext.Provider>
       </MediaContext.Provider>
     </DarkContext.Provider>

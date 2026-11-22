@@ -29,6 +29,8 @@ export interface ThemeConfig {
   show_media: boolean
   ping_lines: string
   offline_last: boolean
+  show_cn_lines: boolean
+  cn_lines: string
   notice: string
   background_url: string
   background_blur: number

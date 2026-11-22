@@ -96,6 +96,9 @@ const HANS: Dict = {
   '重新追蹤': '重新追踪', '追蹤中，約一分鐘': '追踪中，约一分钟', '路由追蹤請求失敗（{status}）': '路由追踪请求失败（{status}）',
   '剛追蹤過，請 {n} 分鐘後再試': '刚追踪过，请 {n} 分钟后再试', '追蹤路由': '追踪路由', '尚未追蹤': '尚未追踪',
   '沒有可以發起追蹤的節點': '没有可以发起追踪的节点',
+  '三網回程': '三网回程', '電信': '电信', '聯通': '联通', '移動': '移动', '中國電信': '中国电信', '中國聯通': '中国联通',
+  '中國移動': '中国移动', '電信 / 聯通 / 移動': '电信 / 联通 / 移动', '優化線路': '优化线路', '普通線路': '普通线路',
+  '站長指定': '站长指定', '自動追蹤 · {date}': '自动追踪 · {date}', '回程到福建三網': '回程到福建三网', '回程到中國三網': '回程到中国三网',
 }
 // prettier-ignore
 const EN: Dict = {
@@ -157,6 +160,10 @@ const EN: Dict = {
   '重新追蹤': 'Trace again', '追蹤中，約一分鐘': 'Tracing, about a minute', '路由追蹤請求失敗（{status}）': 'Trace request failed ({status})',
   '剛追蹤過，請 {n} 分鐘後再試': 'Just traced; try again in {n} min', '追蹤路由': 'Trace route', '尚未追蹤': 'Not traced yet',
   '沒有可以發起追蹤的節點': 'No node can start a trace',
+  '三網回程': 'China return path', '電信': 'CT', '聯通': 'CU', '移動': 'CM', '中國電信': 'China Telecom', '中國聯通': 'China Unicom',
+  '中國移動': 'China Mobile', '電信 / 聯通 / 移動': 'CT / CU / CM', '優化線路': 'Optimised', '普通線路': 'Standard',
+  '站長指定': 'Set by the owner', '自動追蹤 · {date}': 'Traced · {date}', '回程到福建三網': 'Traced to CT / CU / CM in Fujian',
+  '回程到中國三網': 'Traced to CT / CU / CM',
 }
 
 const DICT: Record<Exclude<Lang, 'zh-Hant'>, Dict> = { 'zh-Hans': HANS, en: EN }

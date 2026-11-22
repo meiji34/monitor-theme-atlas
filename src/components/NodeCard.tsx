@@ -1,6 +1,7 @@
 import { bytes, duration, expiry, pct, speed } from '../lib/format'
 import { coordText, type Place } from '../lib/geo'
 import { t } from '../lib/i18n'
+import { CnLinesCard } from './CnLines'
 import { MediaCardLine } from './Media'
 import { NodeLink, openNode } from '../lib/router'
 import type { Node, PingSeries } from '../lib/types'
@@ -157,6 +158,7 @@ export function NodeCard({
           ))}
         </div>
       )}
+      <CnLinesCard node={node} />
       {showMedia && <MediaCardLine nodeId={node.id} />}
     </article>
   )

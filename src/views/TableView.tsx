@@ -1,3 +1,4 @@
+import { CnLinesCell } from '../components/CnLines'
 import { Flag } from '../components/Flag'
 import { latencyTone, type PingLine } from '../components/NodeCard'
 import { Rate } from '../components/Rate'
@@ -18,12 +19,12 @@ function Bar({ v }: { v: number }) {
   )
 }
 
-const HEAD = ['節點', '分組', 'CPU', '記憶體', '硬碟', '上傳 / 下載', '本月流量', '延遲', '在線', '到期']
+const HEAD = ['節點', '分組', 'CPU', '記憶體', '硬碟', '上傳 / 下載', '本月流量', '延遲', '電信 / 聯通 / 移動', '在線', '到期']
 
 export function TableView({ nodes, lines }: { nodes: Node[]; lines: (n: Node) => PingLine[] }) {
   return (
     <div className="panel overflow-x-auto">
-      <table className="w-full min-w-[1100px] [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:first-child]:pl-5 [&_th:last-child]:pr-5 text-[16px] min-[1700px]:text-[17px]">
+      <table className="w-full min-w-[1240px] [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:first-child]:pl-5 [&_th:last-child]:pr-5 text-[16px] min-[1700px]:text-[17px]">
         <thead>
           <tr className="border-b border-line text-left">
             {HEAD.map((h) => (
@@ -84,6 +85,9 @@ export function TableView({ nodes, lines }: { nodes: Node[]; lines: (n: Node) =>
                   ) : (
                     '—'
                   )}
+                </td>
+                <td className="px-3 py-5 font-sans whitespace-nowrap">
+                  <CnLinesCell node={n} />
                 </td>
                 <td className="px-3 py-5 whitespace-nowrap text-muted">
                   {n.online ? duration(m?.uptime) : duration(n.last_seen_ago)}

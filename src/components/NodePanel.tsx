@@ -7,6 +7,8 @@ import { asName, asPath, OTHER_AS, PLAIN_SEA, ROUTES, routeFor, type Route } fro
 import type { Node, PingSeries } from '../lib/types'
 import { Flag } from './Flag'
 import { MediaActions, MediaChecks } from './Media'
+import { CnLinesSection } from './CnLines'
+import { useCnLines } from '../lib/cnlines'
 import { useMedia } from '../lib/useMedia'
 import { useRoutesLive } from '../lib/useRoutes'
 import { Sparkline } from './Meter'
@@ -261,6 +263,12 @@ export function NodePanel({
     </Section>
   ) : null
   const media = useMedia()
+  const cn = useCnLines(node)
+  const cnSection = cn.length ? (
+    <Section title={t('三網回程')}>
+      <CnLinesSection node={node} />
+    </Section>
+  ) : null
   const mediaSection = showMedia && media.available ? (
     <Section title={t('流媒體')} right={<MediaActions nodeId={node.id} />}>
       <MediaChecks nodeId={node.id} home={node.country} />
@@ -359,6 +367,8 @@ export function NodePanel({
               )}
             </Section>
 
+            {cnSection}
+
             {routeSection}
 
             {mediaSection}
@@ -405,6 +415,7 @@ export function NodePanel({
         ) : (
           <>
             <div className="px-4 py-10 text-center text-[14px] text-muted">{node.online ? t('等待資料…') : t('節點離線，沒有即時資料')}</div>
+            {cnSection}
             {routeSection}
             {mediaSection}
           </>

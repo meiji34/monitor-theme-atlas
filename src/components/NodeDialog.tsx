@@ -10,6 +10,8 @@ import { Chart } from './Chart'
 import { Dropdown } from './Dropdown'
 import { Flag } from './Flag'
 import { MediaActions, MediaChecks } from './Media'
+import { CnLinesSection } from './CnLines'
+import { cnTarget, useCnLines } from '../lib/cnlines'
 import { Rate } from './Rate'
 
 type Tab = 'res' | 'net' | 'ping' | 'info'
@@ -66,6 +68,7 @@ export function NodeDialog({
   const [hours, setHours] = useState(1)
   const { hist, charts, err } = useHistory(node.id, hours)
   const media = useMedia()
+  const cn = useCnLines(node)
   const box = useRef<HTMLDivElement>(null)
 
   // Esc closes; focus moves into the dialog and back to where it was after;
@@ -401,6 +404,15 @@ export function NodeDialog({
                 <Row label={t('到期')} value={expiry(node.expires_in)} />
                 {node.public_remark && <Row label={t('備註')} value={node.public_remark} />}
               </div>
+              {cn.length > 0 && (
+                <div className="panel p-4 lg:col-span-2">
+                  <div className="mb-3 flex items-baseline justify-between gap-2">
+                    <span className="hud text-fg!">{t('三網回程')}</span>
+                    <span className="text-[13px] text-muted">{cnTarget()}</span>
+                  </div>
+                  <CnLinesSection node={node} wide />
+                </div>
+              )}
               {showMedia && media.available && (
                 <div className="panel p-4 lg:col-span-2">
                   <div className="mb-3 flex items-baseline justify-between gap-2">
